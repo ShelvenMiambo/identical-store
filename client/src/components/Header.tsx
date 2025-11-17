@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import logoMain from "@assets/Imagem WhatsApp 2025-11-10 às 18.29.32_92ebaa02_1763061428729.jpg";
-const logoIcon = "/logo-icon.png";
+import logoIcon from "/logo-icon.png";
 
 interface HeaderProps {
   cartItemCount?: number;
