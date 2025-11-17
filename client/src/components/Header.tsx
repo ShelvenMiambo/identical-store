@@ -41,8 +41,8 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link href="/">
-            <a className="flex items-center gap-3 hover-elevate active-elevate-2 rounded-md px-2 py-1" data-testid="link-home">
-              <img src="/logo-icon.png" alt="IDENTICAL" className="h-12 w-12 md:h-14 md:w-14 object-contain" />
+            <a className="flex items-center gap-2 hover-elevate active-elevate-2 rounded-md px-2 py-1" data-testid="link-home">
+              <span className="font-bold text-4xl md:text-5xl text-foreground">≠</span>
               <span className="font-bold text-2xl md:text-3xl tracking-tight hidden sm:inline">IDENTICAL</span>
             </a>
           </Link>
