@@ -85,7 +85,6 @@ export function setupAuth(app: Express) {
         nome: req.body.nome,
         telefone: req.body.telefone,
         password: await hashPassword(req.body.password),
-        isAdmin: req.body.isAdmin || false,
       });
 
       req.login(user, (err) => {

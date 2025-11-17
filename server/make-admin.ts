@@ -1,4 +1,3 @@
-
 import { storage } from "./storage";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
@@ -35,14 +34,15 @@ async function createAdmin() {
       
       if (!existing.isAdmin) {
         console.log("\n🔄 Promovendo usuário existente a admin...");
-        await storage.db
-          .update(storage.users)
-          .set({ isAdmin: true })
-          .where(storage.eq(storage.users.username, ADMIN_USER.username));
-        console.log("✅ Usuário promovido a admin com sucesso!");
+        const promoted = await storage.makeUserAdmin(ADMIN_USER.username);
+        if (promoted) {
+          console.log("✅ Usuário promovido a admin com sucesso!");
+        } else {
+          console.log("❌ Erro ao promover usuário!");
+        }
       }
     } else {
-      // Criar novo usuário admin
+      // Criar novo usuário
       const hashedPassword = await hashPassword(ADMIN_USER.password);
       
       const user = await storage.createUser({
@@ -51,8 +51,10 @@ async function createAdmin() {
         nome: ADMIN_USER.nome,
         telefone: ADMIN_USER.telefone,
         password: hashedPassword,
-        isAdmin: true,
       });
+      
+      // Promover a admin
+      await storage.makeUserAdmin(user.username);
       
       console.log("✅ Usuário admin criado com sucesso!\n");
       console.log("📋 Detalhes do acesso:");

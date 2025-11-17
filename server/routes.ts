@@ -24,6 +24,16 @@ export function registerRoutes(app: Express): Server {
   // Setup authentication routes
   setupAuth(app);
 
+  // ============ SESSION & AUTH ROUTES ============
+
+  // Get current session/user
+  app.get("/api/session", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.json({ user: null });
+    }
+    res.json({ user: req.user });
+  });
+
   // ============ PUBLIC ROUTES ============
 
   // Get all products
@@ -103,10 +113,10 @@ export function registerRoutes(app: Express): Server {
   // Checkout - Create order and initiate payment
   app.post("/api/checkout", async (req, res, next) => {
     try {
-      const { items, ...orderData } = req.body;
+      const { items, cupomCodigo, ...orderData } = req.body;
 
       if (!items || items.length === 0) {
-        return res.status(400).send("Carrinho vazio");
+        return res.status(400).json({ error: "Carrinho vazio" });
       }
 
       // Calculate totals
@@ -114,16 +124,40 @@ export function registerRoutes(app: Express): Server {
         return sum + parseFloat(item.precoProduto) * item.quantidade;
       }, 0);
 
-      const desconto = 0; // TODO: Apply coupon discount
+      let desconto = 0;
+      
+      // Apply coupon if provided
+      if (cupomCodigo) {
+        const coupon = await storage.getCouponByCode(cupomCodigo);
+        if (coupon && coupon.ativo) {
+          // Verify coupon is valid
+          const now = new Date();
+          const isNotExpired = !coupon.dataFim || new Date(coupon.dataFim) >= now;
+          const hasUsesLeft = !coupon.limiteUsos || coupon.usos < coupon.limiteUsos;
+          const meetsMinimum = !coupon.minimoCompra || subtotal >= parseFloat(coupon.minimoCompra);
+
+          if (isNotExpired && hasUsesLeft && meetsMinimum) {
+            if (coupon.tipo === "percentual") {
+              desconto = (subtotal * parseFloat(coupon.valor)) / 100;
+            } else {
+              desconto = parseFloat(coupon.valor);
+            }
+            // Increment coupon usage
+            await storage.incrementCouponUses(coupon.id);
+          }
+        }
+      }
+
       const total = subtotal - desconto;
 
       // Create order
       const order = await storage.createOrder({
         userId: req.user?.id || null,
         status: "pendente",
-        subtotal: subtotal.toString(),
-        desconto: desconto.toString(),
-        total: total.toString(),
+        subtotal: subtotal.toFixed(2),
+        desconto: desconto.toFixed(2),
+        total: total.toFixed(2),
+        cupomCodigo: cupomCodigo || null,
         ...orderData,
       });
 
@@ -153,7 +187,7 @@ export function registerRoutes(app: Express): Server {
       res.json({
         order,
         // checkout_url: paysuiteResponse.checkout_url, // Will be added when PaySuite is integrated
-        message: "Pedido criado com sucesso. Integração PaySuite pendente.",
+        message: "Pedido criado com sucesso!",
       });
     } catch (error) {
       next(error);
@@ -329,28 +363,44 @@ export function registerRoutes(app: Express): Server {
   // Validate coupon code
   app.post("/api/coupons/validate", async (req, res, next) => {
     try {
-      const { code } = req.body;
+      const { code, subtotal } = req.body;
       const coupon = await storage.getCouponByCode(code);
 
       if (!coupon || !coupon.ativo) {
-        return res.status(404).send("Cupão inválido");
+        return res.status(404).json({ error: "Cupão inválido" });
       }
 
       // Check if coupon has expired
       if (coupon.dataFim && new Date(coupon.dataFim) < new Date()) {
-        return res.status(400).send("Cupão expirado");
+        return res.status(400).json({ error: "Cupão expirado" });
       }
 
       // Check if coupon has reached usage limit
       if (coupon.limiteUsos && coupon.usos >= coupon.limiteUsos) {
-        return res.status(400).send("Cupão esgotado");
+        return res.status(400).json({ error: "Cupão esgotado" });
+      }
+
+      // Check minimum purchase amount
+      if (coupon.minimoCompra && parseFloat(subtotal) < parseFloat(coupon.minimoCompra)) {
+        return res.status(400).json({ 
+          error: `Compra mínima de ${coupon.minimoCompra} MZN necessária` 
+        });
+      }
+
+      // Calculate discount
+      let desconto = 0;
+      if (coupon.tipo === "percentual") {
+        desconto = (parseFloat(subtotal) * parseFloat(coupon.valor)) / 100;
+      } else {
+        desconto = parseFloat(coupon.valor);
       }
 
       res.json({
         valid: true,
+        codigo: coupon.codigo,
         tipo: coupon.tipo,
         valor: coupon.valor,
-        minimoCompra: coupon.minimoCompra,
+        desconto: desconto.toFixed(2),
       });
     } catch (error) {
       next(error);

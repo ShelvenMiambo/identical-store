@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient, apiRequest } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,12 +7,13 @@ import { useState, useEffect } from "react";
 import { CartItem } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
-// Components
+// Layouts
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CartDrawer } from "@/components/CartDrawer";
+import { AdminLayout } from "@/components/AdminLayout";
 
-// Pages
+// Pages - Cliente
 import HomePage from "@/pages/home-page";
 import CollectionsPage from "@/pages/collections-page";
 import ProductPage from "@/pages/product-page";
@@ -24,10 +25,14 @@ import FAQPage from "@/pages/faq-page";
 import ContactPage from "@/pages/contact-page";
 import PrivacyPage from "@/pages/privacy-page";
 import TermsPage from "@/pages/terms-page";
+
+// Pages - Admin
 import AdminDashboard from "@/pages/admin-dashboard";
+
 import NotFound from "@/pages/not-found";
 
-function Router({
+// Router para Cliente (com Header/Footer)
+function ClientRouter({
   cartItems,
   onAddToCart,
   onClearCart,
@@ -66,7 +71,20 @@ function Router({
       <Route path="/contacto" component={ContactPage} />
       <Route path="/privacidade" component={PrivacyPage} />
       <Route path="/termos" component={TermsPage} />
-      <Route path="/admin">
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+// Router para Admin (com AdminLayout)
+function AdminRouter({
+  user,
+}: {
+  user?: any;
+}) {
+  return (
+    <Switch>
+      <Route path="/admin/:rest*">
         {() => <AdminDashboard user={user} />}
       </Route>
       <Route component={NotFound} />
@@ -85,12 +103,14 @@ function AppContent() {
 
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
 
-  // Fetch current user from backend
-  const { data: user, refetch: refetchUser } = useQuery<any>({
-    queryKey: ["/api/user"],
+  // Fetch current session from backend
+  const { data: sessionData, refetch: refetchUser, isLoading } = useQuery<any>({
+    queryKey: ["/api/session"],
     retry: false,
     refetchOnWindowFocus: false,
   });
+
+  const user = sessionData?.user;
 
   // Persist cart to localStorage
   useEffect(() => {
@@ -194,6 +214,8 @@ function AppContent() {
   const handleLogout = async () => {
     try {
       await apiRequest("POST", "/api/logout");
+      // Invalidate session cache after logout
+      queryClient.invalidateQueries({ queryKey: ["/api/session"] });
       await refetchUser();
       toast({
         title: "Sessão terminada",
@@ -204,6 +226,54 @@ function AppContent() {
     }
   };
 
+  const [location, navigate] = useLocation();
+  const isAdminRoute = location.startsWith("/admin");
+
+  // Admin route guards - wait for session to load first
+  if (isAdminRoute) {
+    // Still loading - show nothing while loading
+    if (isLoading) {
+      return null;
+    }
+
+    // Not logged in - redirect to auth
+    if (!user) {
+      setTimeout(() => {
+        navigate("/auth");
+        toast({
+          title: "Acesso negado",
+          description: "Faça login para acessar o painel admin",
+          variant: "destructive",
+        });
+      }, 0);
+      return null;
+    }
+
+    // Logged in but not admin - redirect to home
+    if (!user.isAdmin) {
+      setTimeout(() => {
+        navigate("/");
+        toast({
+          title: "Acesso negado",
+          description: "Apenas administradores podem acessar esta página",
+          variant: "destructive",
+        });
+      }, 0);
+      return null;
+    }
+
+    // Render Admin Layout for admins
+    return (
+      <>
+        <AdminLayout user={user} onLogout={handleLogout}>
+          <AdminRouter user={user} />
+        </AdminLayout>
+        <Toaster />
+      </>
+    );
+  }
+
+  // Render Client Layout
   return (
     <div className="flex flex-col min-h-screen">
       <Header
@@ -213,7 +283,7 @@ function AppContent() {
       />
 
       <main className="flex-1">
-        <Router
+        <ClientRouter
           cartItems={cartItems}
           onAddToCart={handleAddToCart}
           onClearCart={handleClearCart}
