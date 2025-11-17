@@ -306,85 +306,99 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
   }).format(stats.totalRevenue);
 
   return (
-    <div className="min-h-screen pt-24 pb-16 bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-muted-foreground">Gestão da loja IDENTICAL</p>
-        </div>
+    <div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+          Dashboard
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">Visão geral e gestão da loja</p>
+      </div>
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Produtos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.totalProducts}</div>
-            </CardContent>
-          </Card>
+      <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-blue-100">
+              Total Produtos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{stats.totalProducts}</div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Pedidos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.totalOrders}</div>
-            </CardContent>
-          </Card>
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-green-100">
+              Total Pedidos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{stats.totalOrders}</div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pedidos Pendentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">
-                {stats.pendingOrders}
-              </div>
-            </CardContent>
-          </Card>
+        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-orange-100">
+              Pedidos Pendentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {stats.pendingOrders}
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Receita Total
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{revenueFormatted}</div>
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-purple-100">
+              Receita Total
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{revenueFormatted}</div>
+          </CardContent>
+        </Card>
+      </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="orders" data-testid="tab-orders">
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              Pedidos
-            </TabsTrigger>
-            <TabsTrigger value="products" data-testid="tab-products">
-              <Package className="mr-2 h-4 w-4" />
-              Produtos
-            </TabsTrigger>
-            <TabsTrigger value="collections" data-testid="tab-collections">
-              <List className="mr-2 h-4 w-4" />
-              Coleções
-            </TabsTrigger>
-            <TabsTrigger value="coupons" data-testid="tab-coupons">
-              <Ticket className="mr-2 h-4 w-4" />
-              Cupões
-            </TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="orders" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 bg-slate-100 dark:bg-slate-800 p-1">
+          <TabsTrigger 
+            value="orders" 
+            data-testid="tab-orders"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700"
+          >
+            <ShoppingBag className="mr-2 h-4 w-4" />
+            Pedidos
+          </TabsTrigger>
+          <TabsTrigger 
+            value="products" 
+            data-testid="tab-products"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700"
+          >
+            <Package className="mr-2 h-4 w-4" />
+            Produtos
+          </TabsTrigger>
+          <TabsTrigger 
+            value="collections" 
+            data-testid="tab-collections"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700"
+          >
+            <List className="mr-2 h-4 w-4" />
+            Coleções
+          </TabsTrigger>
+          <TabsTrigger 
+            value="coupons" 
+            data-testid="tab-coupons"
+            className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700"
+          >
+            <Ticket className="mr-2 h-4 w-4" />
+            Cupões
+          </TabsTrigger>
+        </TabsList>
 
           {/* Orders Tab */}
           <TabsContent value="orders" className="mt-6">
@@ -1041,7 +1055,6 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
     </div>
   );
 }
