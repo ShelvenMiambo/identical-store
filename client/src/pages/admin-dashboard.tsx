@@ -398,18 +398,19 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                     Nenhum pedido encontrado
                   </p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Cliente</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>ID</TableHead>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="hidden sm:table-cell">Data</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                       {orders.map((order) => {
                         const totalFormatado = new Intl.NumberFormat("pt-MZ", {
                           style: "currency",
@@ -418,11 +419,11 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
 
                         return (
                           <TableRow key={order.id}>
-                            <TableCell className="font-mono text-xs">
+                            <TableCell className="font-mono text-xs whitespace-nowrap">
                               #{order.id.slice(0, 8)}
                             </TableCell>
-                            <TableCell>{order.nomeCliente}</TableCell>
-                            <TableCell className="font-semibold">{totalFormatado}</TableCell>
+                            <TableCell className="max-w-[120px] truncate">{order.nomeCliente}</TableCell>
+                            <TableCell className="font-semibold whitespace-nowrap">{totalFormatado}</TableCell>
                             <TableCell>
                               <Badge
                                 variant={
@@ -432,12 +433,12 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                                     ? "outline"
                                     : "secondary"
                                 }
-                                className="uppercase"
+                                className="uppercase text-xs"
                               >
                                 {order.status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="text-sm text-muted-foreground hidden sm:table-cell whitespace-nowrap">
                               {new Date(order.createdAt).toLocaleDateString("pt-MZ")}
                             </TableCell>
                             <TableCell className="text-right">
@@ -449,7 +450,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                                     onClick={() => setSelectedOrder(order)}
                                     data-testid={`button-view-order-${order.id}`}
                                   >
-                                    Ver Detalhes
+                                    <span className="hidden sm:inline">Ver Detalhes</span>
+                                    <span className="sm:hidden">Ver</span>
                                   </Button>
                                 </DialogTrigger>
                                 <DialogContent className="max-w-2xl">
@@ -488,7 +490,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                                         </Select>
                                       </div>
 
-                                      <div className="grid md:grid-cols-2 gap-4 text-sm">
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                         <div>
                                           <p className="font-semibold mb-2">Cliente</p>
                                           <p className="text-muted-foreground">
@@ -543,6 +545,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                       })}
                     </TableBody>
                   </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -551,16 +554,16 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           {/* Products Tab */}
           <TabsContent value="products" className="mt-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <CardTitle>Gestão de Produtos</CardTitle>
                 <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button data-testid="button-add-product" onClick={resetProductForm}>
+                    <Button data-testid="button-add-product" onClick={resetProductForm} className="w-full sm:w-auto">
                       <Plus className="mr-2 h-4 w-4" />
                       Adicionar Produto
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="max-w-full sm:max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingProduct ? "Editar Produto" : "Novo Produto"}</DialogTitle>
                       <DialogDescription>
@@ -568,7 +571,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="nome">Nome do Produto *</Label>
                           <Input
@@ -606,7 +609,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                         />
                       </div>
 
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="preco">Preço (MZN) *</Label>
                           <Input
@@ -638,7 +641,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="categoria">Categoria</Label>
                           <Input
@@ -741,7 +744,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                         />
                       </div>
 
-                      <div className="flex gap-4">
+                      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
                         <div className="flex items-center space-x-2">
                           <Switch
                             id="destaque"
@@ -750,7 +753,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                               setProductForm({ ...productForm, destaque: checked })
                             }
                           />
-                          <Label htmlFor="destaque">Produto em Destaque</Label>
+                          <Label htmlFor="destaque" className="text-sm">Produto em Destaque</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Switch
@@ -760,7 +763,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                               setProductForm({ ...productForm, novo: checked })
                             }
                           />
-                          <Label htmlFor="novo">Produto Novo</Label>
+                          <Label htmlFor="novo" className="text-sm">Produto Novo</Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Switch
@@ -770,15 +773,15 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                               setProductForm({ ...productForm, ativo: checked })
                             }
                           />
-                          <Label htmlFor="ativo">Produto Ativo</Label>
+                          <Label htmlFor="ativo" className="text-sm">Produto Ativo</Label>
                         </div>
                       </div>
                     </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setProductDialogOpen(false)}>
+                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                      <Button variant="outline" onClick={() => setProductDialogOpen(false)} className="w-full sm:w-auto">
                         Cancelar
                       </Button>
-                      <Button onClick={handleSaveProduct}>
+                      <Button onClick={handleSaveProduct} className="w-full sm:w-auto">
                         {editingProduct ? "Atualizar" : "Criar"} Produto
                       </Button>
                     </DialogFooter>
@@ -791,64 +794,70 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                     Nenhum produto encontrado. Adicione o primeiro produto!
                   </p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Imagem</TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Preço</TableHead>
-                        <TableHead>Estoque</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="hidden sm:table-cell">Imagem</TableHead>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Preço</TableHead>
+                          <TableHead className="hidden md:table-cell">Estoque</TableHead>
+                          <TableHead className="hidden sm:table-cell">Status</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                       {products.map((product) => (
                         <TableRow key={product.id}>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             <img
                               src={product.imagemPrincipal}
                               alt={product.nome}
                               className="w-12 h-12 object-cover rounded"
                             />
                           </TableCell>
-                          <TableCell className="font-semibold">{product.nome}</TableCell>
-                          <TableCell>
+                          <TableCell className="font-semibold max-w-[150px] truncate">{product.nome}</TableCell>
+                          <TableCell className="whitespace-nowrap">
                             {new Intl.NumberFormat("pt-MZ", {
                               style: "currency",
                               currency: "MZN",
                             }).format(parseFloat(product.preco))}
                           </TableCell>
-                          <TableCell>{product.estoque || 0}</TableCell>
-                          <TableCell>
-                            <Badge variant={product.ativo ? "default" : "secondary"}>
+                          <TableCell className="hidden md:table-cell">{product.estoque || 0}</TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge variant={product.ativo ? "default" : "secondary"} className="text-xs">
                               {product.ativo ? "Ativo" : "Inativo"}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditProduct(product)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                if (confirm("Tem certeza que deseja eliminar este produto?")) {
-                                  deleteProductMutation.mutate(product.id);
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          <TableCell className="text-right">
+                            <div className="flex gap-1 justify-end">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleEditProduct(product)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  if (confirm("Tem certeza que deseja eliminar este produto?")) {
+                                    deleteProductMutation.mutate(product.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -857,16 +866,16 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           {/* Collections Tab */}
           <TabsContent value="collections" className="mt-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <CardTitle>Gestão de Coleções</CardTitle>
                 <Dialog open={collectionDialogOpen} onOpenChange={setCollectionDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button data-testid="button-add-collection" onClick={resetCollectionForm}>
+                    <Button data-testid="button-add-collection" onClick={resetCollectionForm} className="w-full sm:w-auto">
                       <Plus className="mr-2 h-4 w-4" />
                       Adicionar Coleção
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-full sm:max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>
                         {editingCollection ? "Editar Coleção" : "Nova Coleção"}
@@ -876,7 +885,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="col-nome">Nome da Coleção *</Label>
                           <Input
@@ -941,11 +950,11 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                         <Label htmlFor="col-ativo">Coleção Ativa</Label>
                       </div>
                     </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setCollectionDialogOpen(false)}>
+                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                      <Button variant="outline" onClick={() => setCollectionDialogOpen(false)} className="w-full sm:w-auto">
                         Cancelar
                       </Button>
-                      <Button onClick={handleSaveCollection}>
+                      <Button onClick={handleSaveCollection} className="w-full sm:w-auto">
                         {editingCollection ? "Atualizar" : "Criar"} Coleção
                       </Button>
                     </DialogFooter>
@@ -958,51 +967,57 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                     Nenhuma coleção encontrada. Adicione a primeira coleção!
                   </p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Slug</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead className="hidden sm:table-cell">Slug</TableHead>
+                          <TableHead className="hidden sm:table-cell">Status</TableHead>
+                          <TableHead className="text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                       {collections.map((collection) => (
                         <TableRow key={collection.id}>
-                          <TableCell className="font-semibold">{collection.nome}</TableCell>
-                          <TableCell className="font-mono text-sm text-muted-foreground">
+                          <TableCell className="font-semibold max-w-[150px] truncate">{collection.nome}</TableCell>
+                          <TableCell className="font-mono text-sm text-muted-foreground hidden sm:table-cell">
                             {collection.slug}
                           </TableCell>
-                          <TableCell>
-                            <Badge variant={collection.ativo ? "default" : "secondary"}>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge variant={collection.ativo ? "default" : "secondary"} className="text-xs">
                               {collection.ativo ? "Ativo" : "Inativo"}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditCollection(collection)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => {
-                                if (confirm("Tem certeza que deseja eliminar esta coleção?")) {
-                                  deleteCollectionMutation.mutate(collection.id);
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          <TableCell className="text-right">
+                            <div className="flex gap-1 justify-end">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleEditCollection(collection)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => {
+                                  if (confirm("Tem certeza que deseja eliminar esta coleção?")) {
+                                    deleteCollectionMutation.mutate(collection.id);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -1011,9 +1026,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           {/* Coupons Tab */}
           <TabsContent value="coupons" className="mt-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <CardTitle>Gestão de Cupões</CardTitle>
-                <Button data-testid="button-add-coupon">
+                <Button data-testid="button-add-coupon" className="w-full sm:w-auto">
                   <Plus className="mr-2 h-4 w-4" />
                   Criar Cupão
                 </Button>
