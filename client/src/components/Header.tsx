@@ -5,7 +5,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import logoMain from "@assets/Imagem WhatsApp 2025-11-10 às 18.29.32_92ebaa02_1763061428729.jpg";
-import logoIcon from "/logo-icon.png";
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -43,7 +42,7 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
           {/* Logo */}
           <Link href="/">
             <a className="flex items-center gap-2 hover-elevate active-elevate-2 rounded-md px-2 py-1" data-testid="link-home">
-              <img src={logoIcon} alt="IDENTICAL" className="h-8 w-8 md:h-10 md:w-10 object-contain" />
+              <img src="/logo-icon.png" alt="IDENTICAL" className="h-8 w-8 md:h-10 md:w-10 object-contain" />
               <span className="font-bold text-xl md:text-2xl tracking-tight hidden sm:inline">IDENTICAL</span>
             </a>
           </Link>
