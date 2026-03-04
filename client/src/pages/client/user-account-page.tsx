@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Package, User as UserIcon, LogOut } from "lucide-react";
+import { Package, User as UserIcon, LogOut, ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "wouter";
 
 interface UserAccountPageProps {
   user?: any;
@@ -22,78 +23,95 @@ export default function UserAccountPage({ user, onLogout }: UserAccountPageProps
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmado":
-        return "default";
-      case "enviado":
-        return "secondary";
-      case "entregue":
-        return "outline";
-      case "cancelado":
-        return "destructive";
-      default:
-        return "secondary";
+      case "confirmado": return "default";
+      case "enviado": return "secondary";
+      case "entregue": return "outline";
+      case "cancelado": return "destructive";
+      default: return "secondary";
     }
   };
 
-  const formatDate = (date: string | Date) => {
-    return new Date(date).toLocaleDateString("pt-MZ", {
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pendente: "Pendente",
+      confirmado: "Confirmado",
+      enviado: "Enviado",
+      entregue: "Entregue",
+      cancelado: "Cancelado",
+    };
+    return labels[status] || status;
+  };
+
+  const formatDate = (date: string | Date) =>
+    new Date(date).toLocaleDateString("pt-MZ", {
       day: "numeric",
       month: "long",
       year: "numeric",
     });
-  };
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-2">
-            Minha Conta
-          </h1>
-          <p className="text-muted-foreground">Olá, {user?.nome || user?.username}!</p>
+    <div className="min-h-screen pt-20 pb-16 bg-muted/20">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+
+        {/* ─── Header de saudação ─── */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <UserIcon className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl md:text-3xl font-bold uppercase tracking-tight">
+                Minha Conta
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Olá, <span className="font-semibold">{user?.nome?.split(" ")[0] || user?.username}</span>!
+              </p>
+            </div>
+          </div>
         </div>
 
+        {/* ─── Tabs ─── */}
         <Tabs defaultValue="orders" className="w-full">
-          <TabsList>
-            <TabsTrigger value="orders" data-testid="tab-orders">
-              <Package className="mr-2 h-4 w-4" />
+          <TabsList className="w-full h-12 mb-6">
+            <TabsTrigger value="orders" className="flex-1 text-sm font-semibold" data-testid="tab-orders">
+              <Package className="mr-1.5 h-4 w-4" />
               Pedidos
             </TabsTrigger>
-            <TabsTrigger value="profile" data-testid="tab-profile">
-              <UserIcon className="mr-2 h-4 w-4" />
+            <TabsTrigger value="profile" className="flex-1 text-sm font-semibold" data-testid="tab-profile">
+              <UserIcon className="mr-1.5 h-4 w-4" />
               Perfil
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="orders" className="mt-6 space-y-4">
-            <h2 className="text-2xl font-semibold mb-4">Meus Pedidos</h2>
-
+          {/* ─── ABA PEDIDOS ─── */}
+          <TabsContent value="orders" className="space-y-4">
             {isLoading ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {[...Array(3)].map((_, i) => (
                   <Card key={i}>
-                    <CardContent className="p-6">
-                      <Skeleton className="h-6 w-32 mb-4" />
+                    <CardContent className="p-4">
+                      <Skeleton className="h-5 w-32 mb-3" />
                       <Skeleton className="h-4 w-full mb-2" />
-                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-2/3" />
                     </CardContent>
                   </Card>
                 ))}
               </div>
             ) : orders.length === 0 ? (
               <Card>
-                <CardContent className="p-12 text-center">
-                  <Package className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <CardContent className="py-12 text-center">
+                  <ShoppingBag className="h-14 w-14 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Nenhum pedido ainda</h3>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-muted-foreground text-sm mb-6">
                     Quando fizer um pedido, ele aparecerá aqui.
                   </p>
-                  <Button>Explorar Produtos</Button>
+                  <Link href="/loja">
+                    <Button className="font-semibold">Explorar Produtos</Button>
+                  </Link>
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {orders.map((order) => {
                   const totalFormatado = new Intl.NumberFormat("pt-MZ", {
                     style: "currency",
@@ -101,49 +119,39 @@ export default function UserAccountPage({ user, onLogout }: UserAccountPageProps
                   }).format(parseFloat(order.total));
 
                   return (
-                    <Card key={order.id} data-testid={`order-card-${order.id}`}>
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <CardTitle className="text-lg">Pedido #{order.id.slice(0, 8)}</CardTitle>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {formatDate(order.createdAt)}
+                    <Card key={order.id} className="overflow-hidden" data-testid={`order-card-${order.id}`}>
+                      {/* Header do cartão */}
+                      <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b">
+                        <div>
+                          <p className="font-bold text-sm">Pedido #{order.id.slice(0, 8).toUpperCase()}</p>
+                          <p className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</p>
+                        </div>
+                        <Badge variant={getStatusColor(order.status)} className="uppercase text-xs">
+                          {getStatusLabel(order.status)}
+                        </Badge>
+                      </div>
+
+                      <CardContent className="px-4 py-3 space-y-3">
+                        <div className="flex justify-between items-start text-sm">
+                          <div className="flex-1 min-w-0 pr-4">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Entrega</p>
+                            <p className="text-sm leading-tight">
+                              {order.enderecoEntrega}<br />
+                              {order.cidadeEntrega}, {order.provinciaEntrega}
                             </p>
                           </div>
-                          <Badge variant={getStatusColor(order.status)} className="uppercase">
-                            {order.status}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="font-semibold mb-1">Entrega:</p>
-                              <p className="text-muted-foreground">
-                                {order.enderecoEntrega}
-                                <br />
-                                {order.cidadeEntrega}, {order.provinciaEntrega}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="font-semibold mb-1">Total:</p>
-                              <p className="text-lg font-bold">{totalFormatado}</p>
-                            </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Total</p>
+                            <p className="font-bold text-base">{totalFormatado}</p>
                           </div>
-
-                          {order.metodoPagamento && (
-                            <>
-                              <Separator />
-                              <div className="text-sm">
-                                <p className="font-semibold mb-1">Método de Pagamento:</p>
-                                <p className="text-muted-foreground uppercase">
-                                  {order.metodoPagamento}
-                                </p>
-                              </div>
-                            </>
-                          )}
                         </div>
+
+                        {order.metodoPagamento && (
+                          <div className="pt-1 border-t text-xs text-muted-foreground flex items-center gap-1">
+                            <span className="font-semibold">Pagamento:</span>
+                            <span className="uppercase">{order.metodoPagamento}</span>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   );
@@ -152,44 +160,41 @@ export default function UserAccountPage({ user, onLogout }: UserAccountPageProps
             )}
           </TabsContent>
 
-          <TabsContent value="profile" className="mt-6">
+          {/* ─── ABA PERFIL ─── */}
+          <TabsContent value="profile">
             <Card>
-              <CardHeader>
-                <CardTitle>Informações da Conta</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Informações da Conta</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-semibold text-muted-foreground mb-1">Nome</p>
-                    <p className="text-lg">{user?.nome || "—"}</p>
+              <CardContent className="space-y-0">
+                {[
+                  { label: "Nome", value: user?.nome },
+                  { label: "Email", value: user?.email },
+                  { label: "Username", value: user?.username },
+                  { label: "Telefone", value: user?.telefone },
+                ].map(({ label, value }, i) => (
+                  <div key={label}>
+                    {i > 0 && <Separator />}
+                    <div className="py-3.5">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
+                      <p className="text-base">{value || <span className="text-muted-foreground italic text-sm">Não definido</span>}</p>
+                    </div>
                   </div>
-                  <Separator />
-                  <div>
-                    <p className="text-sm font-semibold text-muted-foreground mb-1">Email</p>
-                    <p className="text-lg">{user?.email || "—"}</p>
-                  </div>
-                  <Separator />
-                  <div>
-                    <p className="text-sm font-semibold text-muted-foreground mb-1">Username</p>
-                    <p className="text-lg">{user?.username || "—"}</p>
-                  </div>
-                  <Separator />
-                  <div>
-                    <p className="text-sm font-semibold text-muted-foreground mb-1">Telefone</p>
-                    <p className="text-lg">{user?.telefone || "—"}</p>
-                  </div>
+                ))}
+
+                <Separator className="mt-2" />
+
+                <div className="pt-4">
+                  <Button
+                    variant="destructive"
+                    className="w-full h-12 font-semibold"
+                    onClick={onLogout}
+                    data-testid="button-logout"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair da Conta
+                  </Button>
                 </div>
-
-                <Separator />
-
-                <Button
-                  variant="destructive"
-                  onClick={onLogout}
-                  data-testid="button-logout"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sair da Conta
-                </Button>
               </CardContent>
             </Card>
           </TabsContent>

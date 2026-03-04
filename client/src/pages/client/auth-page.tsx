@@ -73,29 +73,39 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
   if (user) return <Redirect to="/" />;
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      {/* Left Side - Form */}
-      <div className="flex items-center justify-center p-6 md:p-8 bg-background">
-        <div className="w-full max-w-md space-y-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold uppercase tracking-tight mb-1">IDENTICAL</h1>
-            <p className="text-muted-foreground text-sm">Be Different, Be Classic</p>
-          </div>
+    /* pt-16 compensa o header fixo */
+    <div className="min-h-screen pt-16 md:pt-0 md:grid md:grid-cols-2">
 
+      {/* ─── Coluna do formulário ───────────────────────────── */}
+      <div className="flex flex-col justify-center px-4 py-8 md:py-12 md:px-12 bg-background">
+
+        {/* Brand mark – visível em mobile no topo */}
+        <div className="text-center mb-6">
+          <span className="text-4xl font-bold">≠</span>
+          <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mt-1">IDENTICAL</h1>
+          <p className="text-muted-foreground text-sm mt-1">Be Different, Be Classic</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="w-full max-w-sm mx-auto">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-1">
-              <TabsTrigger value="login" data-testid="tab-login">Entrar</TabsTrigger>
-              <TabsTrigger value="register" data-testid="tab-register">Criar Conta</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 h-12 mb-4">
+              <TabsTrigger value="login" className="text-base font-semibold" data-testid="tab-login">
+                Entrar
+              </TabsTrigger>
+              <TabsTrigger value="register" className="text-base font-semibold" data-testid="tab-register">
+                Criar Conta
+              </TabsTrigger>
             </TabsList>
 
-            {/* LOGIN */}
+            {/* ─── LOGIN ─── */}
             <TabsContent value="login">
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle>Bem-vindo de volta</CardTitle>
-                  <CardDescription>Entre na sua conta para continuar</CardDescription>
+              <Card className="border shadow-sm">
+                <CardHeader className="pb-3 pt-5 px-5">
+                  <CardTitle className="text-xl">Bem-vindo de volta</CardTitle>
+                  <CardDescription>Entre com o seu username e password</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-5 pb-5">
                   <Form {...loginForm}>
                     <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
                       <FormField
@@ -103,11 +113,12 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Username</FormLabel>
+                            <FormLabel className="font-semibold">Username</FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="seu_username"
                                 autoComplete="username"
+                                className="h-12 text-base"
                                 {...field}
                                 data-testid="input-login-username"
                               />
@@ -122,12 +133,13 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel className="font-semibold">Password</FormLabel>
                             <FormControl>
                               <Input
                                 type="password"
                                 placeholder="••••••••"
                                 autoComplete="current-password"
+                                className="h-12 text-base"
                                 {...field}
                                 data-testid="input-login-password"
                               />
@@ -139,8 +151,7 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
 
                       <Button
                         type="submit"
-                        className="w-full font-semibold"
-                        size="lg"
+                        className="w-full h-12 text-base font-bold mt-2"
                         disabled={isLoading}
                         data-testid="button-login-submit"
                       >
@@ -152,26 +163,27 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
               </Card>
             </TabsContent>
 
-            {/* REGISTER */}
+            {/* ─── REGISTER ─── */}
             <TabsContent value="register">
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle>Criar Conta</CardTitle>
-                  <CardDescription>Registe-se para começar a comprar</CardDescription>
+              <Card className="border shadow-sm">
+                <CardHeader className="pb-3 pt-5 px-5">
+                  <CardTitle className="text-xl">Criar Conta</CardTitle>
+                  <CardDescription>Preencha os seus dados para se registar</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-5 pb-5">
                   <Form {...registerForm}>
-                    <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
+                    <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-3">
                       <FormField
                         control={registerForm.control}
                         name="nome"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Nome Completo</FormLabel>
+                            <FormLabel className="font-semibold">Nome Completo</FormLabel>
                             <FormControl>
                               <Input
                                 placeholder="João Silva"
                                 autoComplete="name"
+                                className="h-12 text-base"
                                 {...field}
                                 data-testid="input-register-nome"
                               />
@@ -186,12 +198,13 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel className="font-semibold">Email</FormLabel>
                             <FormControl>
                               <Input
                                 type="email"
                                 placeholder="joao@exemplo.com"
                                 autoComplete="email"
+                                className="h-12 text-base"
                                 {...field}
                                 data-testid="input-register-email"
                               />
@@ -201,36 +214,60 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                         )}
                       />
 
-                      <FormField
-                        control={registerForm.control}
-                        name="username"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Username</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="joaosilva123"
-                                autoComplete="username"
-                                {...field}
-                                data-testid="input-register-username"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={registerForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-semibold">Username</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="joao123"
+                                  autoComplete="username"
+                                  className="h-12 text-base"
+                                  {...field}
+                                  data-testid="input-register-username"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={registerForm.control}
+                          name="telefone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="font-semibold">Telefone <span className="font-normal text-muted-foreground">(opc.)</span></FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="+258 84..."
+                                  autoComplete="tel"
+                                  className="h-12 text-base"
+                                  {...field}
+                                  data-testid="input-register-telefone"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       <FormField
                         control={registerForm.control}
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Password</FormLabel>
+                            <FormLabel className="font-semibold">Password</FormLabel>
                             <FormControl>
                               <Input
                                 type="password"
                                 placeholder="Mínimo 6 caracteres"
                                 autoComplete="new-password"
+                                className="h-12 text-base"
                                 {...field}
                                 data-testid="input-register-password"
                               />
@@ -240,29 +277,9 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                         )}
                       />
 
-                      <FormField
-                        control={registerForm.control}
-                        name="telefone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Telefone <span className="text-muted-foreground font-normal">(opcional)</span></FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="+258 84 123 4567"
-                                autoComplete="tel"
-                                {...field}
-                                data-testid="input-register-telefone"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
                       <Button
                         type="submit"
-                        className="w-full font-semibold"
-                        size="lg"
+                        className="w-full h-12 text-base font-bold mt-2"
                         disabled={isLoading}
                         data-testid="button-register-submit"
                       >
@@ -277,14 +294,14 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
         </div>
       </div>
 
-      {/* Right Side - Hero Image (desktop only) */}
+      {/* ─── Coluna da imagem (só desktop) ─────────────────── */}
       <div className="hidden md:block relative overflow-hidden">
         <img
           src={heroImage}
           alt="IDENTICAL Streetwear"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent" />
         <div className="absolute inset-0 flex items-center justify-center p-12 text-white">
           <div className="max-w-md space-y-6">
             <h2 className="text-4xl font-bold uppercase tracking-tight">
@@ -292,17 +309,17 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
             </h2>
             <p className="text-lg text-white/90">
               Junte-se à comunidade IDENTICAL e explore coleções que celebram a identidade
-              moçambicana e o estilo streetwear.
+              moçambicana.
             </p>
-            <ul className="space-y-3 text-white/80">
+            <ul className="space-y-3 text-white/80 text-lg">
               <li className="flex items-center gap-3">
-                <span className="text-primary text-xl font-bold">✓</span> Produtos exclusivos
+                <span className="text-primary font-bold">✓</span> Produtos exclusivos
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-primary text-xl font-bold">✓</span> Entrega rápida em Moçambique
+                <span className="text-primary font-bold">✓</span> Entrega rápida em Moçambique
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-primary text-xl font-bold">✓</span> Pagamento seguro com M-Pesa
+                <span className="text-primary font-bold">✓</span> Pagamento seguro com M-Pesa
               </li>
             </ul>
           </div>
