@@ -209,6 +209,40 @@
     min-height: unset;
     min-width: unset;
   }
+
+  /* ============================
+     BUTTON CONTRAST & PRESS FEEL
+     ============================ */
+
+  /* Primary buttons: dark press effect */
+  button[class*="bg-primary"]:active,
+  [role="button"][class*="bg-primary"]:active {
+    filter: brightness(0.82);
+    transform: scale(0.97);
+    transition: filter 60ms, transform 60ms;
+  }
+
+  /* All buttons: fast transition */
+  button,
+  [role="button"] {
+    transition: filter 120ms ease, transform 120ms ease, background-color 120ms ease, opacity 120ms ease;
+  }
+
+  /* Outline buttons: visible dark press */
+  button:active:not(:disabled),
+  [role="button"]:active:not(:disabled) {
+    filter: brightness(0.88);
+    transform: scale(0.97);
+  }
+
+  /* Disabled buttons: no press effect */
+  button:disabled,
+  [role="button"][disabled] {
+    filter: none !important;
+    transform: none !important;
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 /**

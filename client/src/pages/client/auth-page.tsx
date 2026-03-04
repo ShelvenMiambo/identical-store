@@ -22,11 +22,12 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password deve ter pelo menos 6 caracteres"),
 });
 
-const registerSchema = loginSchema.extend({
-  email: z.string().email("Email inválido"),
+const registerSchema = z.object({
   nome: z.string().min(3, "Nome completo é obrigatório"),
+  email: z.string().email("Email inválido"),
+  username: z.string().min(3, "Username deve ter pelo menos 3 caracteres"),
+  password: z.string().min(6, "Password deve ter pelo menos 6 caracteres"),
   telefone: z.string().optional(),
-  isAdmin: z.boolean().optional(), // Adicionado campo isAdmin
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -43,22 +44,12 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
+    defaultValues: { username: "", password: "" },
   });
 
   const registerForm = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      nome: "",
-      password: "",
-      telefone: "",
-      isAdmin: false, // Valor padrão para isAdmin
-    },
+    defaultValues: { username: "", email: "", nome: "", password: "", telefone: "" },
   });
 
   const handleLogin = async (data: LoginFormData) => {
@@ -79,31 +70,29 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
     }
   };
 
-  // Redirect if already logged in
-  if (user) {
-    return <Redirect to="/" />;
-  }
+  if (user) return <Redirect to="/" />;
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
       {/* Left Side - Form */}
-      <div className="flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md space-y-8">
+      <div className="flex items-center justify-center p-6 md:p-8 bg-background">
+        <div className="w-full max-w-md space-y-6">
           <div className="text-center">
-            <h1 className="text-3xl font-bold uppercase tracking-tight mb-2">IDENTICAL</h1>
-            <p className="text-muted-foreground">Be Different, Be Classic</p>
+            <h1 className="text-3xl font-bold uppercase tracking-tight mb-1">IDENTICAL</h1>
+            <p className="text-muted-foreground text-sm">Be Different, Be Classic</p>
           </div>
 
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 mb-1">
               <TabsTrigger value="login" data-testid="tab-login">Entrar</TabsTrigger>
-              <TabsTrigger value="register" data-testid="tab-register">Registrar</TabsTrigger>
+              <TabsTrigger value="register" data-testid="tab-register">Criar Conta</TabsTrigger>
             </TabsList>
 
+            {/* LOGIN */}
             <TabsContent value="login">
               <Card>
-                <CardHeader>
-                  <CardTitle>Entrar</CardTitle>
+                <CardHeader className="pb-4">
+                  <CardTitle>Bem-vindo de volta</CardTitle>
                   <CardDescription>Entre na sua conta para continuar</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -116,7 +105,12 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                           <FormItem>
                             <FormLabel>Username</FormLabel>
                             <FormControl>
-                              <Input placeholder="seu_username" {...field} data-testid="input-login-username" />
+                              <Input
+                                placeholder="seu_username"
+                                autoComplete="username"
+                                {...field}
+                                data-testid="input-login-username"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -130,15 +124,27 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                           <FormItem>
                             <FormLabel>Password</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="••••••••" {...field} data-testid="input-login-password" />
+                              <Input
+                                type="password"
+                                placeholder="••••••••"
+                                autoComplete="current-password"
+                                {...field}
+                                data-testid="input-login-password"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-login-submit">
-                        {isLoading ? "Entrando..." : "Entrar"}
+                      <Button
+                        type="submit"
+                        className="w-full font-semibold"
+                        size="lg"
+                        disabled={isLoading}
+                        data-testid="button-login-submit"
+                      >
+                        {isLoading ? "A entrar..." : "Entrar"}
                       </Button>
                     </form>
                   </Form>
@@ -146,18 +152,16 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
               </Card>
             </TabsContent>
 
+            {/* REGISTER */}
             <TabsContent value="register">
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-4">
                   <CardTitle>Criar Conta</CardTitle>
                   <CardDescription>Registe-se para começar a comprar</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...registerForm}>
-                    <form
-                      onSubmit={registerForm.handleSubmit(handleRegister)}
-                      className="space-y-4"
-                    >
+                    <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
                       <FormField
                         control={registerForm.control}
                         name="nome"
@@ -165,7 +169,12 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                           <FormItem>
                             <FormLabel>Nome Completo</FormLabel>
                             <FormControl>
-                              <Input placeholder="João Silva" {...field} data-testid="input-register-nome" />
+                              <Input
+                                placeholder="João Silva"
+                                autoComplete="name"
+                                {...field}
+                                data-testid="input-register-nome"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -179,7 +188,13 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="joao@exemplo.com" {...field} data-testid="input-register-email" />
+                              <Input
+                                type="email"
+                                placeholder="joao@exemplo.com"
+                                autoComplete="email"
+                                {...field}
+                                data-testid="input-register-email"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -193,7 +208,12 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                           <FormItem>
                             <FormLabel>Username</FormLabel>
                             <FormControl>
-                              <Input placeholder="joaosilva" {...field} data-testid="input-register-username" />
+                              <Input
+                                placeholder="joaosilva123"
+                                autoComplete="username"
+                                {...field}
+                                data-testid="input-register-username"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -207,7 +227,13 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                           <FormItem>
                             <FormLabel>Password</FormLabel>
                             <FormControl>
-                              <Input type="password" placeholder="••••••••" {...field} data-testid="input-register-password" />
+                              <Input
+                                type="password"
+                                placeholder="Mínimo 6 caracteres"
+                                autoComplete="new-password"
+                                {...field}
+                                data-testid="input-register-password"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -219,43 +245,28 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                         name="telefone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Telefone (opcional)</FormLabel>
+                            <FormLabel>Telefone <span className="text-muted-foreground font-normal">(opcional)</span></FormLabel>
                             <FormControl>
-                              <Input placeholder="+258 84 123 4567" {...field} data-testid="input-register-telefone" />
+                              <Input
+                                placeholder="+258 84 123 4567"
+                                autoComplete="tel"
+                                {...field}
+                                data-testid="input-register-telefone"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      {/* REMOVER ESTE CAMPO EM PRODUÇÃO - Apenas para teste */}
-                      <FormField
-                        control={registerForm.control}
-                        name="isAdmin"
-                        render={({ field }) => (
-                          <FormItem className="space-y-2">
-                            <FormLabel className="text-red-600">Admin (apenas teste)</FormLabel>
-                            <div className="flex items-center space-x-2">
-                              <FormControl>
-                                <input
-                                  type="checkbox"
-                                  id="isAdmin"
-                                  checked={field.value}
-                                  onChange={field.onChange}
-                                  className="rounded"
-                                />
-                              </FormControl>
-                              <FormLabel htmlFor="isAdmin" className="text-sm text-muted-foreground">
-                                Criar como administrador
-                              </FormLabel>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-register-submit">
-                        {isLoading ? "Criando conta..." : "Criar Conta"}
+                      <Button
+                        type="submit"
+                        className="w-full font-semibold"
+                        size="lg"
+                        disabled={isLoading}
+                        data-testid="button-register-submit"
+                      >
+                        {isLoading ? "A criar conta..." : "Criar Conta"}
                       </Button>
                     </form>
                   </Form>
@@ -266,7 +277,7 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
         </div>
       </div>
 
-      {/* Right Side - Hero */}
+      {/* Right Side - Hero Image (desktop only) */}
       <div className="hidden md:block relative overflow-hidden">
         <img
           src={heroImage}
@@ -284,14 +295,14 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
               moçambicana e o estilo streetwear.
             </p>
             <ul className="space-y-3 text-white/80">
-              <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span> Produtos exclusivos
+              <li className="flex items-center gap-3">
+                <span className="text-primary text-xl font-bold">✓</span> Produtos exclusivos
               </li>
-              <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span> Entrega rápida em Moçambique
+              <li className="flex items-center gap-3">
+                <span className="text-primary text-xl font-bold">✓</span> Entrega rápida em Moçambique
               </li>
-              <li className="flex items-center gap-2">
-                <span className="text-primary">✓</span> Pagamento seguro com M-Pesa
+              <li className="flex items-center gap-3">
+                <span className="text-primary text-xl font-bold">✓</span> Pagamento seguro com M-Pesa
               </li>
             </ul>
           </div>

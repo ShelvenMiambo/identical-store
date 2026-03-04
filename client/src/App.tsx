@@ -189,19 +189,27 @@ function AppContent() {
     setCartItems([]);
   };
 
+  const [location, navigate] = useLocation();
+
   const handleLogin = async (data: any) => {
     try {
-      const result = await apiRequest("POST", "/api/login", data);
-      await refetchUser();
+      await apiRequest("POST", "/api/login", data);
+      const session = await refetchUser();
+      const loggedUser = session.data?.user;
       toast({
         title: "Login bem-sucedido!",
-        description: "Bem-vindo de volta!",
+        description: `Bem-vindo${loggedUser?.nome ? ', ' + loggedUser.nome.split(' ')[0] : ''}!`,
       });
-      navigate("/admin");
+      // Admins vão para o painel, clientes para a sua conta
+      if (loggedUser?.isAdmin) {
+        navigate("/admin");
+      } else {
+        navigate("/conta");
+      }
     } catch (error: any) {
       toast({
         title: "Erro no login",
-        description: error.message || "Credenciais inválidas",
+        description: "Username ou password incorretos. Tente novamente.",
         variant: "destructive",
       });
       throw error;
@@ -210,16 +218,19 @@ function AppContent() {
 
   const handleRegister = async (data: any) => {
     try {
-      const result = await apiRequest("POST", "/api/register", data);
+      // Remover isAdmin dos dados enviados - segurança
+      const { isAdmin: _, ...registerData } = data;
+      await apiRequest("POST", "/api/register", registerData);
       await refetchUser();
       toast({
-        title: "Conta criada!",
+        title: "Conta criada com sucesso!",
         description: "Bem-vindo à IDENTICAL!",
       });
+      navigate("/conta");
     } catch (error: any) {
       toast({
         title: "Erro no registo",
-        description: error.message || "Não foi possível criar conta",
+        description: error.message || "Não foi possível criar a conta. O username ou email pode já estar em uso.",
         variant: "destructive",
       });
       throw error;
@@ -229,19 +240,18 @@ function AppContent() {
   const handleLogout = async () => {
     try {
       await apiRequest("POST", "/api/logout");
-      // Invalidate session cache after logout
       queryClient.invalidateQueries({ queryKey: ["/api/session"] });
       await refetchUser();
       toast({
         title: "Sessão terminada",
         description: "Até breve!",
       });
+      navigate("/");
     } catch (error) {
       console.error("Logout error:", error);
     }
   };
 
-  const [location, navigate] = useLocation();
   const isAdminRoute = location.startsWith("/admin");
 
   // Admin route guards - wait for session to load first
