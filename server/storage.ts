@@ -2,6 +2,7 @@ import {
   type User, type InsertUser,
   type Product, type InsertProduct,
   type Collection, type InsertCollection,
+  type Category, type InsertCategory,
   type Order, type InsertOrder,
   type OrderItem, type InsertOrderItem,
   type Coupon, type InsertCoupon,
@@ -10,6 +11,7 @@ import { randomUUID } from "crypto";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import type { Store } from "express-session";
+import { PostgresStorage } from './storage-pg';
 
 const MemoryStore = createMemoryStore(session);
 
@@ -32,6 +34,9 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
+  incrementProductViews(id: string): Promise<Product | undefined>;
+  decrementProductStock(id: string, quantity: number): Promise<Product | undefined>;
+
 
   // Collections
   getCollections(): Promise<Collection[]>;
@@ -40,6 +45,14 @@ export interface IStorage {
   createCollection(collection: InsertCollection): Promise<Collection>;
   updateCollection(id: string, collection: Partial<InsertCollection>): Promise<Collection | undefined>;
   deleteCollection(id: string): Promise<boolean>;
+
+  // Categories
+  getCategories(): Promise<Category[]>;
+  getCategory(id: string): Promise<Category | undefined>;
+  getCategoryBySlug(slug: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category | undefined>;
+  deleteCategory(id: string): Promise<boolean>;
 
   // Orders
   getOrders(): Promise<Order[]>;
@@ -60,6 +73,17 @@ export interface IStorage {
   updateCoupon(id: string, coupon: Partial<InsertCoupon>): Promise<Coupon | undefined>;
   deleteCoupon(id: string): Promise<boolean>;
   incrementCouponUses(id: string): Promise<void>;
+
+  // Site settings
+  getSettings(): Promise<SiteSettings>;
+  updateSettings(settings: Partial<SiteSettings>): Promise<SiteSettings>;
+}
+
+export interface SiteSettings {
+  heroTitle: string;
+  heroSubtitle: string;
+  banners: string[];
+  highlights: { title: string; description?: string; image?: string }[];
 }
 
 // In-memory storage implementation
@@ -69,9 +93,11 @@ export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private products: Map<string, Product>;
   private collections: Map<string, Collection>;
+  private categories: Map<string, Category>;
   private orders: Map<string, Order>;
   private orderItems: Map<string, OrderItem>;
   private coupons: Map<string, Coupon>;
+  private siteSettings: SiteSettings;
 
   constructor() {
     this.sessionStore = new MemoryStore({
@@ -81,9 +107,20 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.products = new Map();
     this.collections = new Map();
+    this.categories = new Map();
     this.orders = new Map();
     this.orderItems = new Map();
     this.coupons = new Map();
+    this.siteSettings = {
+      heroTitle: "Be Different, Be Classic",
+      heroSubtitle:
+        "Streetwear moçambicano autêntico. Raízes urbanas com forte identidade local.",
+      banners: [
+        "/attached_assets/IMG-20251110-WA0110_1763061428733.jpg",
+        "/attached_assets/IMG-20251110-WA0104_1763061428739.jpg",
+      ],
+      highlights: [],
+    };
 
     // Initialize with some data
     this.seedData();
@@ -118,6 +155,15 @@ export class MemStorage implements IStorage {
       createdCollections.push(created);
     }
 
+    // Seed categories
+    const sampleCategories: Omit<Category, "createdAt">[] = [
+      { id: "c1", nome: "T-Shirts", slug: "t-shirts", descricao: "Camisetas", ativo: true },
+      { id: "c2", nome: "Hoodies", slug: "hoodies", descricao: "Sweats", ativo: true },
+    ];
+    for (const cat of sampleCategories) {
+      await this.createCategory(cat);
+    }
+
     // Seed products
     const sampleProducts: Omit<Product, "createdAt">[] = [
       {
@@ -136,7 +182,8 @@ export class MemStorage implements IStorage {
         ativo: true,
         novo: true,
         destaque: true,
-        collectionId: "1"
+        collectionId: "1",
+        categoryId: "c1"
       },
       {
         id: "2",
@@ -154,7 +201,8 @@ export class MemStorage implements IStorage {
         ativo: true,
         novo: true,
         destaque: true,
-        collectionId: "1"
+        collectionId: "1",
+        categoryId: "c1"
       },
       {
         id: "3",
@@ -172,7 +220,8 @@ export class MemStorage implements IStorage {
         ativo: true,
         novo: true,
         destaque: true,
-        collectionId: "1"
+        collectionId: "1",
+        categoryId: "c1"
       },
       {
         id: "4",
@@ -190,7 +239,8 @@ export class MemStorage implements IStorage {
         ativo: true,
         novo: true,
         destaque: true,
-        collectionId: "2"
+        collectionId: "2",
+        categoryId: "c1"
       }
     ];
 
@@ -235,7 +285,7 @@ export class MemStorage implements IStorage {
   async makeUserAdmin(username: string): Promise<User | undefined> {
     const user = await this.getUserByUsername(username);
     if (!user) return undefined;
-    
+
     const updatedUser = { ...user, isAdmin: true };
     this.users.set(user.id, updatedUser);
     return updatedUser;
@@ -260,10 +310,12 @@ export class MemStorage implements IStorage {
       ...insertProduct,
       descricao: insertProduct.descricao ?? null,
       collectionId: insertProduct.collectionId ?? null,
+      categoryId: insertProduct.categoryId ?? null,
       ativo: insertProduct.ativo ?? true,
       destaque: insertProduct.destaque ?? false,
       novo: insertProduct.novo ?? false,
       estoque: insertProduct.estoque ?? 0,
+      views: 0,
       id,
       createdAt: new Date(),
     };
@@ -279,6 +331,27 @@ export class MemStorage implements IStorage {
     this.products.set(id, updated);
     return updated;
   }
+
+  async incrementProductViews(id: string): Promise<Product | undefined> {
+    const product = this.products.get(id);
+    if (!product) return undefined;
+    const updated = { ...product, views: (product.views ?? 0) + 1 };
+    this.products.set(id, updated);
+    return updated;
+  }
+
+  async decrementProductStock(id: string, quantity: number): Promise<Product | undefined> {
+    const product = this.products.get(id);
+    if (!product) return undefined;
+
+    const currentStock = product.estoque ?? 0;
+    const newStock = Math.max(0, currentStock - quantity);
+
+    const updated = { ...product, estoque: newStock };
+    this.products.set(id, updated);
+    return updated;
+  }
+
 
   async deleteProduct(id: string): Promise<boolean> {
     return this.products.delete(id);
@@ -323,6 +396,44 @@ export class MemStorage implements IStorage {
 
   async deleteCollection(id: string): Promise<boolean> {
     return this.collections.delete(id);
+  }
+
+  // Categories
+  async getCategories(): Promise<Category[]> {
+    return Array.from(this.categories.values());
+  }
+
+  async getCategory(id: string): Promise<Category | undefined> {
+    return this.categories.get(id);
+  }
+
+  async getCategoryBySlug(slug: string): Promise<Category | undefined> {
+    return Array.from(this.categories.values()).find((c) => c.slug === slug);
+  }
+
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const id = randomUUID();
+    const category: Category = {
+      ...insertCategory,
+      descricao: insertCategory.descricao ?? null,
+      ativo: insertCategory.ativo ?? true,
+      id,
+      createdAt: new Date(),
+    };
+    this.categories.set(id, category);
+    return category;
+  }
+
+  async updateCategory(id: string, updates: Partial<InsertCategory>): Promise<Category | undefined> {
+    const category = this.categories.get(id);
+    if (!category) return undefined;
+    const updated = { ...category, ...updates };
+    this.categories.set(id, updated);
+    return updated;
+  }
+
+  async deleteCategory(id: string): Promise<boolean> {
+    return this.categories.delete(id);
   }
 
   // Orders
@@ -443,6 +554,33 @@ export class MemStorage implements IStorage {
       this.coupons.set(id, coupon);
     }
   }
+
+  async getSettings(): Promise<SiteSettings> {
+    return this.siteSettings;
+  }
+
+  async updateSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
+    // Shallow merge and minimal guarding
+    const next: SiteSettings = {
+      heroTitle: settings.heroTitle ?? this.siteSettings.heroTitle,
+      heroSubtitle: settings.heroSubtitle ?? this.siteSettings.heroSubtitle,
+      banners: Array.isArray(settings.banners)
+        ? settings.banners.filter((s) => typeof s === "string")
+        : this.siteSettings.banners,
+      highlights: Array.isArray(settings.highlights)
+        ? settings.highlights.map((h) => ({
+          title: String(h.title ?? ""),
+          description: h.description ?? undefined,
+          image: h.image ?? undefined,
+        }))
+        : this.siteSettings.highlights,
+    };
+    this.siteSettings = next;
+    return this.siteSettings;
+  }
 }
 
-export const storage = new MemStorage();
+// Escolher storage automaticamente: PostgreSQL se DATABASE_URL existir, senão MemStorage
+export const storage: IStorage = process.env.DATABASE_URL
+  ? new PostgresStorage()
+  : new MemStorage();

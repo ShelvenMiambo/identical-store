@@ -47,6 +47,24 @@ export const insertCollectionSchema = createInsertSchema(collections).omit({
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type Collection = typeof collections.$inferSelect;
 
+// ============ CATEGORIES ============
+export const categories = pgTable("categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nome: text("nome").notNull(),
+  slug: text("slug").notNull().unique(),
+  descricao: text("descricao"),
+  ativo: boolean("ativo").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type Category = typeof categories.$inferSelect;
+
 // ============ PRODUCTS ============
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -55,10 +73,12 @@ export const products = pgTable("products", {
   descricao: text("descricao"),
   preco: decimal("preco", { precision: 10, scale: 2 }).notNull(),
   collectionId: varchar("collection_id").references(() => collections.id),
+  categoryId: varchar("category_id").references(() => categories.id),
   imagens: text("imagens").array().notNull(),
   tamanhos: text("tamanhos").array().notNull(), // ["XS", "S", "M", "L", "XL"]
   cores: text("cores").array().notNull(), // ["Branco", "Preto"]
   estoque: integer("estoque").default(0).notNull(),
+  views: integer("views").default(0).notNull(),
   destaque: boolean("destaque").default(false).notNull(),
   novo: boolean("novo").default(false).notNull(),
   ativo: boolean("ativo").default(true).notNull(),

@@ -45,6 +45,7 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ user }: AdminDashboardProps) {
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const queryClient = useQueryClient();
 
   // Redirect if not authenticated or not admin
   if (!user) {
@@ -245,13 +246,13 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       slug: product.slug,
       descricao: product.descricao || "",
       preco: product.preco,
-      precoPromocional: product.precoPromocional || "",
-      categoria: product.categoria || "",
+      precoPromocional: "",
+      categoria: "",
       collectionId: product.collectionId || "",
       tamanhos: product.tamanhos || [],
       cores: product.cores || [],
       imagens: product.imagens || [],
-      imagemPrincipal: product.imagemPrincipal,
+      imagemPrincipal: product.imagens?.[0] || "",
       estoque: product.estoque?.toString() || "10",
       destaque: product.destaque,
       novo: product.novo,
@@ -266,7 +267,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
       nome: collection.nome,
       slug: collection.slug,
       descricao: collection.descricao || "",
-      imagemCapa: collection.imagemCapa || "",
+      imagemCapa: collection.imagem || "",
       ativo: collection.ativo,
     });
     setCollectionDialogOpen(true);
@@ -825,7 +826,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                         <TableRow key={product.id}>
                           <TableCell className="hidden sm:table-cell">
                             <img
-                              src={product.imagemPrincipal}
+                              src={product.imagens?.[0] || ""}
                               alt={product.nome}
                               className="w-12 h-12 object-cover rounded"
                             />

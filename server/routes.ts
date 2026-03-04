@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertProductSchema, insertCollectionSchema, insertCouponSchema } from "@shared/schema";
+import { insertCategorySchema } from "@shared/schema";
+import fs from "fs";
+import path from "path";
 
 // Middleware to check if user is authenticated
 function requireAuth(req: any, res: any, next: any) {
@@ -69,6 +72,26 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get all categories
+  app.get("/api/categories", async (_req, res, next) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Site settings (public)
+  app.get("/api/settings", async (_req, res, next) => {
+    try {
+      const settings = await storage.getSettings();
+      res.json(settings);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Get collection by ID
   app.get("/api/collections/:id", async (req, res, next) => {
     try {
@@ -125,7 +148,7 @@ export function registerRoutes(app: Express): Server {
       }, 0);
 
       let desconto = 0;
-      
+
       // Apply coupon if provided
       if (cupomCodigo) {
         const coupon = await storage.getCouponByCode(cupomCodigo);
@@ -175,19 +198,43 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // TODO: Integrate with PaySuite
-      // const paysuiteResponse = await createPaySuitePayment({
-      //   amount: total,
-      //   reference: order.id,
-      //   callback_url: `${process.env.BASE_URL}/api/paysuite/webhook`,
-      //   return_url: `${process.env.BASE_URL}/pedido/${order.id}`,
-      // });
+      // Integrate with PaySuite
+      const { createPaySuitePayment } = await import("./paysuite");
+      const paysuiteResponse = await createPaySuitePayment({
+        amount: total,
+        reference: order.id,
+        customer_name: orderData.nomeCompleto || "Cliente IDENTICAL",
+        customer_email: orderData.email,
+        customer_phone: orderData.telefone,
+        callback_url: `${process.env.BASE_URL || 'http://localhost:5000'}/api/paysuite/webhook`,
+        return_url: `${process.env.BASE_URL || 'http://localhost:5000'}/pedido/${order.id}`,
+        description: `Pedido IDENTICAL #${order.id}`,
+      });
 
-      // For now, return order without payment integration
+      // Save payment ID if successful
+      if (paysuiteResponse.success && paysuiteResponse.payment_id) {
+        // Store payment ID in order (you may need to add this field)
+        console.log('✅ Pagamento PaySuite criado:', paysuiteResponse.payment_id);
+      }
+
+      // Send confirmation email
+      try {
+        const { enviarEmailConfirmacaoPedido } = await import("./email");
+        await enviarEmailConfirmacaoPedido(order, items);
+        console.log('📧 Email de confirmação enviado para:', order.email);
+      } catch (emailError) {
+        console.error('⚠️ Erro ao enviar email:', emailError);
+        // Don't fail the checkout if email fails
+      }
+
       res.json({
         order,
-        // checkout_url: paysuiteResponse.checkout_url, // Will be added when PaySuite is integrated
-        message: "Pedido criado com sucesso!",
+        checkout_url: paysuiteResponse.checkout_url,
+        payment_id: paysuiteResponse.payment_id,
+        success: paysuiteResponse.success,
+        message: paysuiteResponse.success
+          ? "Pedido criado! Redirecionando para pagamento..."
+          : "Pedido criado, mas erro ao gerar pagamento. Contacte o suporte.",
       });
     } catch (error) {
       next(error);
@@ -198,17 +245,61 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/paysuite/webhook", async (req, res, next) => {
     try {
-      // TODO: Verify PaySuite signature
-      const { reference, status } = req.body;
+      console.log('📩 [PaySuite Webhook] Recebido:', req.body);
 
-      if (status === "completed") {
-        await storage.updateOrderStatus(reference, "confirmado");
-      } else if (status === "failed") {
-        await storage.updateOrderStatus(reference, "cancelado");
+      const { reference, status, payment_id, transaction_id } = req.body;
+
+      if (!reference) {
+        console.error('❌ [PaySuite Webhook] Referência não fornecida');
+        return res.status(400).json({ error: 'Reference required' });
       }
 
-      res.sendStatus(200);
+      // Log the webhook for debugging
+      console.log(`🔔 [PaySuite Webhook] Status: ${status}, Referência: ${reference}`);
+
+      // Update order based on payment status
+      if (status === 'completed' || status === 'paid' || status === 'success') {
+        const order = await storage.getOrder(reference);
+        if (order && order.status !== "confirmado") {
+          await storage.updateOrderStatus(reference, "confirmado");
+          console.log(`✅ [PaySuite Webhook] Pedido ${reference} confirmado`);
+
+          // Decrement stock
+          try {
+            const items = await storage.getOrderItems(reference);
+            for (const item of items) {
+              await storage.decrementProductStock(item.productId, item.quantidade);
+              console.log(`📉 Stock reduzido para produto ${item.productId}: -${item.quantidade}`);
+            }
+          } catch (stockError) {
+            console.error('⚠️ Erro ao decrementar stock:', stockError);
+          }
+
+          // Send payment confirmation email
+          try {
+            if (order.email) {
+              const { enviarEmailPagamentoConfirmado } = await import("./email");
+              await enviarEmailPagamentoConfirmado(order);
+              console.log(`📧 Email de pagamento confirmado enviado para: ${order.email}`);
+            }
+          } catch (emailError) {
+            console.error('⚠️ Erro ao enviar email de confirmação:', emailError);
+          }
+        }
+      } else if (status === 'failed' || status === 'cancelled' || status === 'canceled') {
+        await storage.updateOrderStatus(reference, "cancelado");
+        console.log(`❌ [PaySuite Webhook] Pedido ${reference} cancelado`);
+      } else if (status === 'pending') {
+        // Keep as pending
+        console.log(`⏳ [PaySuite Webhook] Pedido ${reference} pendente`);
+      } else {
+        console.warn(`⚠️ [PaySuite Webhook] Status desconhecido: ${status}`);
+      }
+
+      // Respond to PaySuite
+      res.status(200).json({ message: 'Webhook processed successfully' });
     } catch (error) {
+      console.error('❌ [PaySuite Webhook] Erro:', error);
       next(error);
     }
   });
@@ -287,6 +378,43 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Create category (admin)
+  app.post("/api/admin/categories", requireAdmin, async (req, res, next) => {
+    try {
+      const validated = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(validated);
+      res.status(201).json(category);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Update category (admin)
+  app.put("/api/admin/categories/:id", requireAdmin, async (req, res, next) => {
+    try {
+      const category = await storage.updateCategory(req.params.id, req.body);
+      if (!category) {
+        return res.status(404).send("Categoria não encontrada");
+      }
+      res.json(category);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Delete category (admin)
+  app.delete("/api/admin/categories/:id", requireAdmin, async (req, res, next) => {
+    try {
+      const deleted = await storage.deleteCategory(req.params.id);
+      if (!deleted) {
+        return res.status(404).send("Categoria não encontrada");
+      }
+      res.sendStatus(204);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Update collection (admin)
   app.put("/api/admin/collections/:id", requireAdmin, async (req, res, next) => {
     try {
@@ -308,6 +436,66 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).send("Coleção não encontrada");
       }
       res.sendStatus(204);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Update site settings (admin)
+  app.put("/api/admin/settings", requireAdmin, async (req, res, next) => {
+    try {
+      const updated = await storage.updateSettings(req.body ?? {});
+      res.json(updated);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Base64 image upload (admin) - Cloudinary quando configurado, local como fallback
+  app.post("/api/admin/upload-base64", requireAdmin, async (req, res, next) => {
+    try {
+      const { filename, dataUrl } = req.body || {};
+      if (!dataUrl || typeof dataUrl !== "string") {
+        return res.status(400).json({ message: "dataUrl obrigatório" });
+      }
+
+      // Se Cloudinary está configurado, usar Cloudinary
+      if (process.env.CLOUDINARY_CLOUD_NAME) {
+        const { v2: cloudinary } = await import('cloudinary');
+        cloudinary.config({
+          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+          api_key: process.env.CLOUDINARY_API_KEY,
+          api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
+
+        const result = await cloudinary.uploader.upload(dataUrl, {
+          folder: 'identical',
+        });
+
+        return res.status(201).json({ url: result.secure_url });
+      }
+
+      // Fallback: guardar localmente (desenvolvimento)
+      const match = dataUrl.match(/^data:(.+);base64,(.*)$/);
+      if (!match) {
+        return res.status(400).json({ message: "Formato inválido" });
+      }
+      const mime = match[1];
+      const base64 = match[2];
+      const buffer = Buffer.from(base64, "base64");
+
+      const ext = mime === "image/png" ? ".png" : mime === "image/jpeg" ? ".jpg" : "";
+      if (!ext) {
+        return res.status(400).json({ message: "Tipo de imagem não suportado" });
+      }
+
+      const safeName = (filename && typeof filename === "string" ? filename.replace(/[^a-zA-Z0-9-_]/g, "_") : "upload")
+        + "_" + Date.now() + ext;
+      const assetsDir = path.join(process.cwd(), "attached_assets");
+      if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
+      const filePath = path.join(assetsDir, safeName);
+      fs.writeFileSync(filePath, buffer);
+      return res.status(201).json({ url: "/attached_assets/" + safeName });
     } catch (error) {
       next(error);
     }
@@ -382,8 +570,8 @@ export function registerRoutes(app: Express): Server {
 
       // Check minimum purchase amount
       if (coupon.minimoCompra && parseFloat(subtotal) < parseFloat(coupon.minimoCompra)) {
-        return res.status(400).json({ 
-          error: `Compra mínima de ${coupon.minimoCompra} MZN necessária` 
+        return res.status(400).json({
+          error: `Compra mínima de ${coupon.minimoCompra} MZN necessária`
         });
       }
 
@@ -402,6 +590,31 @@ export function registerRoutes(app: Express): Server {
         valor: coupon.valor,
         desconto: desconto.toFixed(2),
       });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Product views
+  app.post("/api/products/:id/view", async (req, res, next) => {
+    try {
+      const product = await storage.incrementProductViews(req.params.id);
+      if (!product) {
+        return res.status(404).send("Produto não encontrado");
+      }
+      res.json({ views: product.views });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Paysuite initiate (stub)
+  app.post("/api/paysuite/initiate", async (req, res, next) => {
+    try {
+      const { total, reference } = req.body;
+      // Prepare stub checkout url
+      const checkout_url = `https://paysuite.example/checkout?ref=${encodeURIComponent(reference || "order")}`;
+      res.json({ checkout_url, total });
     } catch (error) {
       next(error);
     }

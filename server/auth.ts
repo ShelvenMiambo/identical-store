@@ -10,7 +10,7 @@ import { User as SelectUser } from "@shared/schema";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SelectUser { }
   }
 }
 
@@ -23,15 +23,28 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
+  const suppliedClean = supplied.trim();
+  console.log(`🔍 [comparePasswords] Supplied password: "${suppliedClean}"`);
+  console.log(`🔍 [comparePasswords] Stored hash: ${stored.substring(0, 40)}...`);
+
   const [hashed, salt] = stored.split(".");
+  console.log(`🔍 [comparePasswords] Extracted salt: ${salt.substring(0, 20)}...`);
+
   const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  const suppliedBuf = (await scryptAsync(suppliedClean, salt, 64)) as Buffer;
+
+  console.log(`🔍 [comparePasswords] Supplied buf (first 20): ${suppliedBuf.toString("hex").substring(0, 40)}...`);
+  console.log(`🔍 [comparePasswords] Stored buf (first 20): ${hashedBuf.toString("hex").substring(0, 40)}...`);
+
+  const result = timingSafeEqual(hashedBuf, suppliedBuf);
+  console.log(`🔍 [comparePasswords] Result: ${result}`);
+
+  return result;
 }
 
 export function setupAuth(app: Express) {
   const sessionSecret = process.env.SESSION_SECRET || "identical-secret-key-change-in-production";
-  
+
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
     resave: false,
@@ -40,7 +53,8 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: "lax",
     },
   };
 
@@ -51,10 +65,28 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
+      console.log(`🔐 [Login Attempt] Username: ${username}`);
       const user = await storage.getUserByUsername(username);
-      if (!user || !(await comparePasswords(password, user.password))) {
+      console.log(`👤 [Login] User found:`, !!user);
+      if (user) {
+        console.log(`   User ID: ${user.id}`);
+        console.log(`   isAdmin: ${user.isAdmin}`);
+        console.log(`   Password hash (first 20): ${user.password.substring(0, 20)}...`);
+      }
+
+      if (!user) {
+        console.log(`❌ [Login] User not found`);
+        return done(null, false);
+      }
+
+      const passwordMatch = await comparePasswords(password, user.password);
+      console.log(`🔑 [Login] Password match:`, passwordMatch);
+
+      if (!passwordMatch) {
+        console.log(`❌ [Login] Password mismatch`);
         return done(null, false);
       } else {
+        console.log(`✅ [Login] Successful login for ${username}`);
         return done(null, user);
       }
     })
@@ -96,7 +128,14 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+  app.post("/api/login", (req, res, next) => {
+    console.log("📥 [/api/login] Request body:", JSON.stringify(req.body));
+    console.log("📥 [/api/login] Username:", req.body.username);
+    console.log("📥 [/api/login] Password:", req.body.password);
+    console.log("📥 [/api/login] Password length:", req.body.password?.length);
+    console.log("📥 [/api/login] Password type:", typeof req.body.password);
+    next();
+  }, passport.authenticate("local"), (req, res) => {
     res.status(200).json(req.user);
   });
 

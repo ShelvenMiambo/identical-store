@@ -1,0 +1,25 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente (contém senhas e chaves privadas - NUNCA fazer commit!)
+.env
+.env.local
+.env.production
+
+# Build
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Sessões locais temporárias
+.local/

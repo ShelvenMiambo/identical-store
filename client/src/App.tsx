@@ -8,26 +8,34 @@ import { CartItem } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 // Layouts
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { CartDrawer } from "@/components/CartDrawer";
-import { AdminLayout } from "@/components/AdminLayout";
+import { Header } from "@/components/client/Header";
+import { Footer } from "@/components/client/Footer";
+import { CartDrawer } from "@/components/client/CartDrawer";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 // Pages - Cliente
-import HomePage from "@/pages/home-page";
-import CollectionsPage from "@/pages/collections-page";
-import ProductPage from "@/pages/product-page";
-import CheckoutPage from "@/pages/checkout-page";
-import AuthPage from "@/pages/auth-page";
-import UserAccountPage from "@/pages/user-account-page";
-import AboutPage from "@/pages/about-page";
-import FAQPage from "@/pages/faq-page";
-import ContactPage from "@/pages/contact-page";
-import PrivacyPage from "@/pages/privacy-page";
-import TermsPage from "@/pages/terms-page";
+import HomePage from "@/pages/client/home-page";
+import CollectionsPage from "@/pages/client/collections-page";
+import ProductPage from "@/pages/client/product-page";
+import CheckoutPage from "@/pages/client/checkout-page";
+import AuthPage from "@/pages/client/auth-page";
+import UserAccountPage from "@/pages/client/user-account-page";
+import AboutPage from "@/pages/client/about-page";
+import FAQPage from "@/pages/client/faq-page";
+import ContactPage from "@/pages/client/contact-page";
+import PrivacyPage from "@/pages/client/privacy-page";
+import TermsPage from "@/pages/client/terms-page";
+import OrderStatusPage from "@/pages/client/order-status-page";
+
 
 // Pages - Admin
-import AdminDashboard from "@/pages/admin-dashboard";
+import DashboardPage from "@/pages/admin/dashboard-page";
+import ProductsPage from "@/pages/admin/products-page";
+import OrdersPage from "@/pages/admin/orders-page";
+import CollectionsAdminPage from "@/pages/admin/collections-page";
+import ReportsPage from "@/pages/admin/reports-page";
+import SettingsAdminPage from "@/pages/admin/settings-page";
+import CategoriesAdminPage from "@/pages/admin/categories-page";
 
 import NotFound from "@/pages/not-found";
 
@@ -71,7 +79,9 @@ function ClientRouter({
       <Route path="/contacto" component={ContactPage} />
       <Route path="/privacidade" component={PrivacyPage} />
       <Route path="/termos" component={TermsPage} />
+      <Route path="/pedido/:id" component={OrderStatusPage} />
       <Route component={NotFound} />
+
     </Switch>
   );
 }
@@ -84,9 +94,13 @@ function AdminRouter({
 }) {
   return (
     <Switch>
-      <Route path="/admin/:rest*">
-        {() => <AdminDashboard user={user} />}
-      </Route>
+      <Route path="/admin" component={DashboardPage} />
+      <Route path="/admin/produtos" component={ProductsPage} />
+      <Route path="/admin/pedidos" component={OrdersPage} />
+      <Route path="/admin/categorias" component={CategoriesAdminPage} />
+      <Route path="/admin/colecoes" component={CollectionsAdminPage} />
+      <Route path="/admin/configuracoes" component={SettingsAdminPage} />
+      <Route path="/admin/relatorios" component={ReportsPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -94,7 +108,7 @@ function AdminRouter({
 
 function AppContent() {
   const { toast } = useToast();
-  
+
   // Cart state managed with localStorage
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem("identical-cart");
@@ -183,6 +197,7 @@ function AppContent() {
         title: "Login bem-sucedido!",
         description: "Bem-vindo de volta!",
       });
+      navigate("/admin");
     } catch (error: any) {
       toast({
         title: "Erro no login",
