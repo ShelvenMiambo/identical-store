@@ -28,7 +28,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[70vh] md:h-[80vh] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[65vh] md:h-[80vh] flex items-center justify-center overflow-hidden">
         {/* Background Image with Dark Wash */}
         <div className="absolute inset-0 z-0">
           <img
@@ -41,19 +41,19 @@ export default function HomePage() {
 
         {/* Hero Content */}
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-4 uppercase tracking-tight">
+          <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold text-white mb-3 uppercase tracking-tight">
             {settings?.heroTitle ?? (
               <>Be Different,<br />Be Classic</>
             )}
           </h1>
-          <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+          <p className="text-base md:text-xl text-white/90 mb-6 max-w-2xl mx-auto">
             {settings?.heroSubtitle ?? "Streetwear moçambicano autêntico. Raízes urbanas com forte identidade local."}
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Link href="/loja">
               <Button
                 size="lg"
-                className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20"
+                className="w-full sm:w-auto bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border border-white/20"
                 data-testid="button-hero-explore"
               >
                 <ShoppingBag className="mr-2 h-5 w-5" />
@@ -64,7 +64,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-white/30"
+                className="w-full sm:w-auto bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white border-white/30"
                 data-testid="button-hero-collections"
               >
                 Ver Coleções
@@ -79,7 +79,7 @@ export default function HomePage() {
       {!collectionsLoading && collections.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-4">
+            <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight mb-3">
               Coleções
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -124,10 +124,10 @@ export default function HomePage() {
       {/* Featured Products */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-4">
+          <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight mb-3">
             Produtos em Destaque
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto">
             Peças essenciais para o seu guarda-roupa urbano
           </p>
         </div>
@@ -178,7 +178,7 @@ export default function HomePage() {
 
             {/* Content */}
             <div className="space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-tight">
+              <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight mb-3">
                 Sobre a IDENTICAL
               </h2>
               <div className="space-y-4 text-muted-foreground leading-relaxed">
@@ -209,7 +209,7 @@ export default function HomePage() {
       {/* Social Proof / Instagram Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-4">
+          <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight mb-3">
             #IDENTICAL
           </h2>
           <p className="text-muted-foreground">
@@ -217,7 +217,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {[
             "/attached_assets/IMG-20251110-WA0110_1763061428733.jpg",
             "/attached_assets/IMG-20251110-WA0111_1763061428734.jpg",

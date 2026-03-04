@@ -33,17 +33,16 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-background/95 backdrop-blur-md border-b shadow-sm" : "bg-background/80 backdrop-blur-sm"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "bg-background/95 backdrop-blur-md border-b shadow-sm" : "bg-background/80 backdrop-blur-sm"
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link href="/">
-            <a className="flex items-center gap-2 hover-elevate active-elevate-2 rounded-md px-2 py-1" data-testid="link-home">
-              <span className="font-bold text-4xl md:text-5xl text-foreground">≠</span>
-              <span className="font-bold text-2xl md:text-3xl tracking-tight hidden sm:inline">IDENTICAL</span>
+            <a className="flex items-center gap-1.5 hover-elevate active-elevate-2 rounded-md px-2 py-1" data-testid="link-home">
+              <span className="font-bold text-3xl md:text-5xl text-foreground">≠</span>
+              <span className="font-bold text-lg md:text-3xl tracking-tight">IDENTICAL</span>
             </a>
           </Link>
 
@@ -52,9 +51,8 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <a
-                  className={`text-sm font-medium uppercase tracking-wider transition-colors hover-elevate px-3 py-2 rounded-md ${
-                    location === item.href ? "text-foreground" : "text-muted-foreground"
-                  }`}
+                  className={`text-sm font-medium uppercase tracking-wider transition-colors hover-elevate px-3 py-2 rounded-md ${location === item.href ? "text-foreground" : "text-muted-foreground"
+                    }`}
                   data-testid={`link-${item.label.toLowerCase()}`}
                 >
                   {item.label}
@@ -113,9 +111,8 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
                     <Link key={item.href} href={item.href}>
                       <a
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`text-lg font-semibold uppercase tracking-wider hover-elevate px-4 py-2 rounded-md block ${
-                          location === item.href ? "text-foreground" : "text-muted-foreground"
-                        }`}
+                        className={`text-lg font-semibold uppercase tracking-wider hover-elevate px-4 py-2 rounded-md block ${location === item.href ? "text-foreground" : "text-muted-foreground"
+                          }`}
                         data-testid={`mobile-link-${item.label.toLowerCase()}`}
                       >
                         {item.label}
