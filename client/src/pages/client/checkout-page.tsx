@@ -90,19 +90,27 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
         desconto: desconto
       });
 
-      if (result.success && result.checkout_url) {
+      // Clear cart always (order was created)
+      if (onClearCart) onClearCart();
+
+      if (result.checkout_url) {
+        // PaySuite working → redirect to payment
         toast({
-          title: "Pedido criado com sucesso!",
-          description: "Redirecionando para o pagamento seguro...",
+          title: "Pedido criado!",
+          description: "Redirecionando para pagamento seguro...",
         });
-
-        // Clear cart before redirecting
-        if (onClearCart) onClearCart();
-
-        // Redirect to PaySuite
-        window.location.href = result.checkout_url;
+        setTimeout(() => {
+          window.location.href = result.checkout_url;
+        }, 800);
       } else {
-        throw new Error(result.message || "Erro ao gerar link de pagamento");
+        // PaySuite not available → redirect to order status page
+        toast({
+          title: "Pedido criado com sucesso! ✅",
+          description: "Será contactado para confirmar o pagamento via M-Pesa.",
+        });
+        setTimeout(() => {
+          window.location.href = result.order_url || `/pedido/${result.order?.id}`;
+        }, 1500);
       }
     } catch (error: any) {
       console.error("Erro no checkout:", error);
