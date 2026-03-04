@@ -17,7 +17,7 @@ export function Footer() {
             </p>
             <div className="flex gap-4">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/identical_oficial?igsh=ZncyZnRqbm5lN3hx"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover-elevate active-elevate-2 p-2 rounded-md"
