@@ -142,7 +142,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="flex flex-col-reverse md:grid md:grid-cols-3 gap-6 md:gap-8">
           {/* Main Form */}
           <div className="md:col-span-2">
             <Card>
@@ -172,7 +172,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                           )}
                         />
 
-                        <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
                             name="emailCliente"
@@ -231,7 +231,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                           )}
                         />
 
-                        <div className="grid md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <FormField
                             control={form.control}
                             name="cidadeEntrega"

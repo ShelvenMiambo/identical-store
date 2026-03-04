@@ -73,9 +73,9 @@ export function CartDrawer({
 
                 return (
                   <div key={`${item.productId}-${item.tamanho}-${item.cor}`} data-testid={`cart-item-${index}`}>
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
                       {/* Product Image */}
-                      <div className="w-20 h-20 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-md bg-muted overflow-hidden flex-shrink-0">
                         <img
                           src={item.imagemProduto}
                           alt={item.nomeProduto}
@@ -83,72 +83,66 @@ export function CartDrawer({
                         />
                       </div>
 
-                      {/* Product Details */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-sm leading-tight mb-1" data-testid={`text-cart-item-name-${index}`}>
-                          {item.nomeProduto}
-                        </h4>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          {item.tamanho} / {item.cor}
-                        </p>
-                        <p className="font-bold text-sm" data-testid={`text-cart-item-price-${index}`}>
-                          {totalFormatado}
-                        </p>
+                      {/* Product Details + Controls */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="min-w-0">
+                            <h4 className="font-semibold text-sm leading-tight mb-1 truncate" data-testid={`text-cart-item-name-${index}`}>
+                              {item.nomeProduto}
+                            </h4>
+                            <p className="text-xs text-muted-foreground">
+                              {item.tamanho} / {item.cor}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 flex-shrink-0 -mt-1 -mr-1"
+                            onClick={() => onRemoveItem(item.productId, item.tamanho, item.cor)}
+                            data-testid={`button-remove-item-${index}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+
+                        {/* Quantity + Price row */}
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() =>
+                                onUpdateQuantity(item.productId, item.tamanho, item.cor, item.quantidade - 1)
+                              }
+                              disabled={item.quantidade <= 1}
+                              data-testid={`button-decrease-quantity-${index}`}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-8 text-center font-medium text-sm" data-testid={`text-quantity-${index}`}>
+                              {item.quantidade}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() =>
+                                onUpdateQuantity(item.productId, item.tamanho, item.cor, item.quantidade + 1)
+                              }
+                              data-testid={`button-increase-quantity-${index}`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <p className="font-bold text-sm" data-testid={`text-cart-item-price-${index}`}>
+                            {totalFormatado}
+                          </p>
+                        </div>
                       </div>
-
-                      {/* Remove Button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 flex-shrink-0"
-                        onClick={() => onRemoveItem(item.productId, item.tamanho, item.cor)}
-                        data-testid={`button-remove-item-${index}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
 
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-2 mt-3 ml-24">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() =>
-                          onUpdateQuantity(
-                            item.productId,
-                            item.tamanho,
-                            item.cor,
-                            item.quantidade - 1
-                          )
-                        }
-                        disabled={item.quantidade <= 1}
-                        data-testid={`button-decrease-quantity-${index}`}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-12 text-center font-medium" data-testid={`text-quantity-${index}`}>
-                        {item.quantidade}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() =>
-                          onUpdateQuantity(
-                            item.productId,
-                            item.tamanho,
-                            item.cor,
-                            item.quantidade + 1
-                          )
-                        }
-                        data-testid={`button-increase-quantity-${index}`}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-
-                    {index < items.length - 1 && <Separator className="mt-6" />}
+                    {index < items.length - 1 && <Separator className="mt-4" />}
                   </div>
                 );
               })}
