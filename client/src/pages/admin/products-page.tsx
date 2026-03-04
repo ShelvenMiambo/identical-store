@@ -37,6 +37,7 @@ import { Plus, Edit, Trash2, X, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useRef } from "react";
+import { ComboboxCreatable } from "@/components/ui/combobox-creatable";
 
 export default function ProductsPage() {
     const { toast } = useToast();
@@ -112,6 +113,25 @@ export default function ProductsPage() {
         onError: (error: any) => {
             toast({ title: "Erro ao eliminar produto", description: error.message, variant: "destructive" });
         },
+    });
+
+    // Mutations for inline creation
+    const createCollectionMutation = useMutation({
+        mutationFn: async (nome: string) => {
+            const slug = nome.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+            return apiRequest("POST", "/api/admin/collections", { nome, slug, ativo: true, ordem: 0 });
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/collections"] }),
+        onError: (e: any) => toast({ title: "Erro ao criar coleção", description: e.message, variant: "destructive" }),
+    });
+
+    const createCategoryMutation = useMutation({
+        mutationFn: async (nome: string) => {
+            const slug = nome.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+            return apiRequest("POST", "/api/admin/categories", { nome, slug, ativo: true });
+        },
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/categories"] }),
+        onError: (e: any) => toast({ title: "Erro ao criar categoria", description: e.message, variant: "destructive" }),
     });
 
     const resetProductForm = () => {
@@ -255,44 +275,32 @@ export default function ProductsPage() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="collectionId">Coleção</Label>
-                                    <Select
+                                    <ComboboxCreatable
+                                        options={collections.map(c => ({ id: c.id, label: c.nome }))}
                                         value={productForm.collectionId}
-                                        onValueChange={(value) =>
-                                            setProductForm({ ...productForm, collectionId: value })
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecionar coleção" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {collections.map((col) => (
-                                                <SelectItem key={col.id} value={col.id}>
-                                                    {col.nome}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                        onSelect={(id) => setProductForm({ ...productForm, collectionId: id })}
+                                        onCreate={async (nome) => {
+                                            const result = await createCollectionMutation.mutateAsync(nome);
+                                            return result.id;
+                                        }}
+                                        placeholder="Selecionar coleção..."
+                                        createLabel="Criar coleção"
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="categoryId">Categoria</Label>
-                                    <Select
+                                    <ComboboxCreatable
+                                        options={categories.map(c => ({ id: c.id, label: c.nome }))}
                                         value={productForm.categoryId}
-                                        onValueChange={(value) =>
-                                            setProductForm({ ...productForm, categoryId: value })
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecionar categoria" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map((cat) => (
-                                                <SelectItem key={cat.id} value={cat.id}>
-                                                    {cat.nome}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                        onSelect={(id) => setProductForm({ ...productForm, categoryId: id })}
+                                        onCreate={async (nome) => {
+                                            const result = await createCategoryMutation.mutateAsync(nome);
+                                            return result.id;
+                                        }}
+                                        placeholder="Selecionar categoria..."
+                                        createLabel="Criar categoria"
+                                    />
                                 </div>
 
                                 <div className="space-y-2">

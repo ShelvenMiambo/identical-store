@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -155,11 +155,10 @@ export default function ProductPage({ onAddToCart }: ProductPageProps) {
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`aspect-square rounded-md overflow-hidden border-2 transition-all hover-elevate ${
-                      selectedImageIndex === index
+                    className={`aspect-square rounded-md overflow-hidden border-2 transition-all hover-elevate ${selectedImageIndex === index
                         ? "border-primary"
                         : "border-transparent"
-                    }`}
+                      }`}
                     data-testid={`button-thumbnail-${index}`}
                   >
                     <img
