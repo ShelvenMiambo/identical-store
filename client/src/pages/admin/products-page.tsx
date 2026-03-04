@@ -398,6 +398,8 @@ export default function ProductsPage() {
                                                             filename: file.name,
                                                             dataUrl
                                                         });
+                                                        // apiRequest now returns JSON directly
+                                                        if (!resp?.url) throw new Error("URL não recebido do servidor");
                                                         setProductForm((prev) => ({
                                                             ...prev,
                                                             imagens: [...prev.imagens, resp.url]

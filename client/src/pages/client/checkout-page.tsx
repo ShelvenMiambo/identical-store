@@ -82,15 +82,13 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
     setIsProcessing(true);
 
     try {
-      const response = await apiRequest("POST", "/api/checkout", {
+      const result = await apiRequest("POST", "/api/checkout", {
         ...data,
         items: cartItems,
         total: total,
         subtotal: subtotal,
         desconto: desconto
       });
-
-      const result = await response.json();
 
       if (result.success && result.checkout_url) {
         toast({

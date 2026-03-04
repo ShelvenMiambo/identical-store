@@ -333,8 +333,24 @@ export function registerRoutes(app: Express): Server {
   // Create product (admin)
   app.post("/api/admin/products", requireAdmin, async (req, res, next) => {
     try {
-      const validated = insertProductSchema.parse(req.body);
-      const product = await storage.createProduct(validated);
+      // Normalise input: empty strings for optional FK fields → null
+      const body = {
+        ...req.body,
+        collectionId: req.body.collectionId || null,
+        categoryId: req.body.categoryId || null,
+        imagens: Array.isArray(req.body.imagens) ? req.body.imagens : [],
+        tamanhos: Array.isArray(req.body.tamanhos) ? req.body.tamanhos : [],
+        cores: Array.isArray(req.body.cores) ? req.body.cores : [],
+        estoque: Number(req.body.estoque) || 0,
+      };
+
+      const parsed = insertProductSchema.safeParse(body);
+      if (!parsed.success) {
+        const msgs = parsed.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
+        return res.status(400).json({ message: `Dados inválidos: ${msgs}` });
+      }
+
+      const product = await storage.createProduct(parsed.data);
       res.status(201).json(product);
     } catch (error) {
       next(error);
