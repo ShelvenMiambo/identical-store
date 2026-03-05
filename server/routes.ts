@@ -522,6 +522,63 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // ============ ADMIN USER MANAGEMENT ============
+
+  // Get all users (admin)
+  app.get("/api/admin/users", requireAdmin, async (req, res, next) => {
+    try {
+      const allUsers = await storage.getUsers();
+      // Never expose password hashes
+      const safe = allUsers.map(({ password: _, ...u }) => u);
+      res.json(safe);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Update user (admin) - can change nome, email, isAdmin; password reset optional
+  app.put("/api/admin/users/:id", requireAdmin, async (req, res, next) => {
+    try {
+      const { password, ...rest } = req.body;
+      let updates: any = { ...rest };
+
+      // If a new password was provided, hash it
+      if (password && typeof password === "string" && password.length > 0) {
+        const { scrypt, randomBytes } = await import("crypto");
+        const { promisify } = await import("util");
+        const scryptAsync = promisify(scrypt);
+        const salt = randomBytes(16).toString("hex");
+        const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+        updates.password = `${buf.toString("hex")}.${salt}`;
+      }
+
+      const user = await storage.updateUser(req.params.id, updates);
+      if (!user) return res.status(404).send("Utilizador não encontrado");
+
+      const { password: _, ...safe } = user;
+      res.json(safe);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Delete user (admin)
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res, next) => {
+    try {
+      // Prevent deleting yourself
+      if (req.user?.id === req.params.id) {
+        return res.status(400).json({ message: "Não pode apagar a sua própria conta." });
+      }
+      const deleted = await storage.deleteUser(req.params.id);
+      if (!deleted) return res.status(404).send("Utilizador não encontrado");
+      res.sendStatus(204);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+
+
   // Get all coupons (admin)
   app.get("/api/admin/coupons", requireAdmin, async (req, res, next) => {
     try {

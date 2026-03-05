@@ -1,7 +1,7 @@
 
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Package, ShoppingBag, List, Ticket, LayoutDashboard, LogOut, User } from "lucide-react";
+import { Package, ShoppingBag, List, Ticket, LayoutDashboard, LogOut, User, Users, Settings, ImageIcon, BarChart3 } from "lucide-react";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -18,8 +18,9 @@ export function AdminLayout({ children, user, onLogout }: AdminLayoutProps) {
     { label: "Produtos", href: "/admin/produtos", icon: Package },
     { label: "Categorias", href: "/admin/categorias", icon: List },
     { label: "Coleções", href: "/admin/colecoes", icon: List },
-    { label: "Configurações", href: "/admin/configuracoes", icon: User },
-    { label: "Relatórios", href: "/admin/relatorios", icon: Ticket },
+    { label: "Utilizadores", href: "/admin/utilizadores", icon: Users },
+    { label: "Configurações", href: "/admin/configuracoes", icon: Settings },
+    { label: "Relatórios", href: "/admin/relatorios", icon: BarChart3 },
   ];
 
   return (

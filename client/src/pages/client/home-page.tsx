@@ -20,15 +20,6 @@ const HERO_SLIDES = [
 ];
 
 export default function HomePage() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
@@ -41,6 +32,24 @@ export default function HomePage() {
     queryKey: ["/api/settings"],
   });
 
+  // Use admin-configured banners if available, otherwise use default slides
+  const slides: string[] =
+    settings?.banners && settings.banners.length > 0 ? settings.banners : HERO_SLIDES;
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    setCurrentSlide(0); // reset when slides change
+  }, [slides.length]);
+
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [slides.length]);
+
   const featuredProducts = products.filter((p) => p.destaque).slice(0, 4);
   const newProducts = products.filter((p) => p.novo).slice(0, 4);
 
@@ -50,7 +59,7 @@ export default function HomePage() {
       <section className="relative h-[65vh] md:h-[80vh] flex items-center justify-center overflow-hidden">
         {/* Background Slideshow */}
         <div className="absolute inset-0 z-0">
-          {HERO_SLIDES.map((src, index) => (
+          {slides.map((src, index) => (
             <img
               key={src}
               src={src}

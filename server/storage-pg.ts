@@ -71,6 +71,23 @@ export class PostgresStorage implements IStorage {
         return result[0];
     }
 
+    async getUsers(): Promise<User[]> {
+        return db.select().from(users).orderBy(desc(users.createdAt));
+    }
+
+    async updateUser(id: string, updates: Partial<InsertUser & { isAdmin: boolean }>): Promise<User | undefined> {
+        const result = await db.update(users)
+            .set(updates)
+            .where(eq(users.id, id))
+            .returning();
+        return result[0];
+    }
+
+    async deleteUser(id: string): Promise<boolean> {
+        const result = await db.delete(users).where(eq(users.id, id)).returning();
+        return result.length > 0;
+    }
+
     // ===== PRODUCTS =====
     async getProducts(): Promise<Product[]> {
         return db.select().from(products).orderBy(desc(products.createdAt));

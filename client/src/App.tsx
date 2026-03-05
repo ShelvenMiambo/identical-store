@@ -36,6 +36,7 @@ import CollectionsAdminPage from "@/pages/admin/collections-page";
 import ReportsPage from "@/pages/admin/reports-page";
 import SettingsAdminPage from "@/pages/admin/settings-page";
 import CategoriesAdminPage from "@/pages/admin/categories-page";
+import UsersAdminPage from "@/pages/admin/users-page";
 
 import NotFound from "@/pages/not-found";
 
@@ -101,6 +102,7 @@ function AdminRouter({
       <Route path="/admin/colecoes" component={CollectionsAdminPage} />
       <Route path="/admin/configuracoes" component={SettingsAdminPage} />
       <Route path="/admin/relatorios" component={ReportsPage} />
+      <Route path="/admin/utilizadores" component={UsersAdminPage} />
       <Route component={NotFound} />
     </Switch>
   );
