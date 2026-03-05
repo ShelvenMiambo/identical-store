@@ -6,10 +6,29 @@ import { ArrowRight, ShoppingBag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Product, Collection } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
-const heroImage1 = "/attached_assets/IMG-20251110-WA0115_1763061428731.jpg";
+import { useState, useEffect } from "react";
+
 const heroImage2 = "/attached_assets/IMG-20251110-WA0109_1763061428732.jpg";
 
+const HERO_SLIDES = [
+  "/attached_assets/IMG-20251110-WA0115_1763061428731.jpg",
+  "/attached_assets/IMG-20251110-WA0110_1763061428733.jpg",
+  "/attached_assets/IMG-20251110-WA0105_1763061428740.jpg",
+  "/attached_assets/IMG-20251110-WA0111_1763061428734.jpg",
+  "/attached_assets/IMG-20251110-WA0104_1763061428739.jpg",
+  "/attached_assets/IMG-20251110-WA0112_1763061428737.jpg",
+];
+
 export default function HomePage() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
@@ -29,18 +48,25 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[65vh] md:h-[80vh] flex items-center justify-center overflow-hidden">
-        {/* Background Image with Dark Wash */}
+        {/* Background Slideshow */}
         <div className="absolute inset-0 z-0">
-          <img
-            src={settings?.banners?.[0] ?? heroImage1}
-            alt="IDENTICAL Streetwear"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
+          {HERO_SLIDES.map((src, index) => (
+            <img
+              key={src}
+              src={src}
+              alt={`IDENTICAL Slide ${index + 1}`}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{
+                opacity: index === currentSlide ? 1 : 0,
+                transition: "opacity 1.2s ease-in-out",
+              }}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 z-10"></div>
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+        <div className="relative z-20 text-center px-4 max-w-4xl mx-auto">
           <h1 className="text-3xl md:text-6xl lg:text-7xl font-bold text-white mb-3 uppercase tracking-tight">
             {settings?.heroTitle ?? (
               <>Be Different,<br />Be Classic</>
