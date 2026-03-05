@@ -173,7 +173,7 @@ export function registerRoutes(app: Express): Server {
 
       const total = subtotal - desconto;
 
-      // Create order
+      // Create order (includes metodoPagamento + comprovanteUrl from body)
       const order = await storage.createOrder({
         userId: req.user?.id || null,
         status: "pendente",
@@ -198,48 +198,29 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Integrate with PaySuite
-      const { createPaySuitePayment } = await import("./paysuite");
-      const paysuiteResponse = await createPaySuitePayment({
-        amount: total,
-        reference: order.id,
-        // Use the correct field names from the checkout form
-        customer_name: orderData.nomeCliente || orderData.nomeCompleto || "Cliente IDENTICAL",
-        customer_email: orderData.emailCliente || orderData.email,
-        customer_phone: orderData.telefoneCliente || orderData.telefone,
-        callback_url: `${process.env.BASE_URL || 'https://identical-store-production.up.railway.app'}/api/paysuite/webhook`,
-        return_url: `${process.env.BASE_URL || 'https://identical-store-production.up.railway.app'}/pedido/${order.id}`,
-        description: `Pedido IDENTICAL #${order.id.slice(0, 8).toUpperCase()}`,
-      });
-
-      if (paysuiteResponse.success && paysuiteResponse.payment_id) {
-        console.log('✅ Pagamento PaySuite criado:', paysuiteResponse.payment_id);
-      } else {
-        console.warn('⚠️ PaySuite falhou, pedido criado sem link de pagamento:', paysuiteResponse.error);
-      }
-
-      // Send confirmation email (best-effort)
+      // Send confirmation email to client (best-effort)
       try {
-        const { enviarEmailConfirmacaoPedido } = await import("./email");
-        await enviarEmailConfirmacaoPedido(order, items);
-        console.log('📧 Email de confirmação enviado para:', orderData.emailCliente || orderData.email);
+        const { enviarEmailConfirmacaoPedido, enviarEmailComprovanteAdmin } = await import("./email");
+        if (orderData.emailCliente) {
+          await enviarEmailConfirmacaoPedido(order, items);
+        }
+        // Notify admin with proof of payment
+        if (orderData.comprovanteUrl) {
+          await enviarEmailComprovanteAdmin(order, items, orderData.comprovanteUrl);
+          console.log('📧 Email com comprovativo enviado ao admin');
+        }
       } catch (emailError) {
         console.error('⚠️ Erro ao enviar email:', emailError);
       }
 
-      // Always return success with order info
-      // If PaySuite fails, redirect to order status page instead of payment page
+      // Return order info — PaySuite is in standby, always go to order status page
       res.json({
         order,
-        checkout_url: paysuiteResponse.checkout_url || null,
-        payment_id: paysuiteResponse.payment_id || null,
-        // Consider success if order was created, even if PaySuite failed
+        checkout_url: null,
+        payment_id: null,
         success: true,
-        paysuite_success: paysuiteResponse.success,
         order_url: `/pedido/${order.id}`,
-        message: paysuiteResponse.success
-          ? "Pedido criado! Redirecionando para pagamento..."
-          : "Pedido criado com sucesso! Siga as instruções para concluir o pagamento.",
+        message: "Pedido criado com sucesso! A equipa irá confirmar o pagamento em breve.",
       });
     } catch (error) {
       next(error);

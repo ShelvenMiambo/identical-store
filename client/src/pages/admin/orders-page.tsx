@@ -5,30 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+    Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { FileText, ExternalLink } from "lucide-react";
 
 export default function OrdersPage() {
     const { toast } = useToast();
@@ -43,18 +30,16 @@ export default function OrdersPage() {
         mutationFn: async ({ id, status }: { id: string; status: string }) =>
             apiRequest("PUT", `/api/admin/orders/${id}/status`, { status }),
         onSuccess: (_, { id }) => {
-            // Invalidar lista admin + pedido individual → reflete na página do cliente imediatamente
             queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
             queryClient.invalidateQueries({ queryKey: [`/api/orders/${id}`] });
             queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-            toast({ title: "✅ Status do pedido atualizado!" });
+            toast({ title: "✅ Status do pedido atualizado! Reflete na conta do cliente." });
         },
         onError: (error: any) => {
             toast({ title: "Erro ao atualizar status", description: error.message, variant: "destructive" });
         },
     });
 
-    /* Badges coloridos por estado */
     const statusBadge = (status: string) => {
         const map: Record<string, { label: string; cls: string }> = {
             pendente: { label: "Pendente", cls: "bg-yellow-100 text-yellow-800 border-yellow-300" },
@@ -71,15 +56,51 @@ export default function OrdersPage() {
         );
     };
 
-    /* Label do método de pagamento */
     const payLabel = (m?: string | null) => {
-        if (!m) return null;
-        const labels: Record<string, string> = {
-            mpesa: "M-Pesa",
-            emola: "e-Mola",
-            mbim: "Millennium BIM",
-        };
-        return labels[m] ?? m;
+        if (!m) return "—";
+        return { mpesa: "M-Pesa", emola: "e-Mola", mbim: "Millennium BIM" }[m] ?? m;
+    };
+
+    /* Renderizar o comprovativo */
+    const renderComprovativo = (url?: string | null) => {
+        if (!url) {
+            return (
+                <div className="flex items-center gap-2 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 text-amber-700 dark:text-amber-400 text-sm">
+                    <span>⚠️ Nenhum comprovativo enviado pelo cliente.</span>
+                </div>
+            );
+        }
+        const isImage = /\.(jpg|jpeg|png|gif|webp|avif|heic)$/i.test(url);
+        const isPdf = /\.pdf$/i.test(url);
+
+        return (
+            <div className="space-y-3">
+                <a href={url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium">
+                    <ExternalLink className="h-4 w-4" />
+                    {isPdf ? "Abrir PDF do comprovativo" : "Ver em tamanho completo"}
+                </a>
+                {isImage ? (
+                    <a href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={url} alt="Comprovativo de pagamento"
+                            className="max-h-64 rounded-lg border object-contain w-full bg-muted hover:opacity-90 transition-opacity" />
+                    </a>
+                ) : isPdf ? (
+                    <div className="flex items-center gap-3 p-4 rounded-lg border bg-muted/40">
+                        <FileText className="h-8 w-8 text-red-500 shrink-0" />
+                        <div>
+                            <p className="font-medium text-sm">Ficheiro PDF</p>
+                            <p className="text-xs text-muted-foreground">Clica no link acima para abrir</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-3 p-4 rounded-lg border bg-muted/40">
+                        <FileText className="h-8 w-8 text-blue-500 shrink-0" />
+                        <p className="text-sm">Ficheiro anexado — clica no link acima para ver</p>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     return (
@@ -89,19 +110,15 @@ export default function OrdersPage() {
                     Gestão de Pedidos
                 </h1>
                 <p className="text-slate-600 dark:text-slate-400">
-                    Visualizar e atualizar status dos pedidos
+                    Visualizar, gerir estados e comprovativos de pagamento
                 </p>
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Pedidos</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle>Pedidos</CardTitle></CardHeader>
                 <CardContent>
                     {orders.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">
-                            Nenhum pedido encontrado
-                        </p>
+                        <p className="text-center text-muted-foreground py-8">Nenhum pedido encontrado</p>
                     ) : (
                         <div className="overflow-x-auto">
                             <Table>
@@ -112,16 +129,15 @@ export default function OrdersPage() {
                                         <TableHead>Total</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Pagamento</TableHead>
+                                        <TableHead>Comprovat.</TableHead>
                                         <TableHead className="hidden sm:table-cell">Data</TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {orders.map((order) => {
-                                        const totalFormatado = new Intl.NumberFormat("pt-MZ", {
-                                            style: "currency",
-                                            currency: "MZN",
-                                        }).format(parseFloat(order.total));
+                                        const totalFmt = new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(parseFloat(order.total));
+                                        const comprovanteUrl = (order as any).comprovanteUrl;
 
                                         return (
                                             <TableRow key={order.id}>
@@ -134,12 +150,20 @@ export default function OrdersPage() {
                                                         <p className="text-xs text-muted-foreground">{order.telefoneCliente}</p>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="font-semibold whitespace-nowrap">{totalFormatado}</TableCell>
-                                                <TableCell>
-                                                    {statusBadge(order.status)}
-                                                </TableCell>
+                                                <TableCell className="font-semibold whitespace-nowrap">{totalFmt}</TableCell>
+                                                <TableCell>{statusBadge(order.status)}</TableCell>
                                                 <TableCell className="text-xs text-muted-foreground">
-                                                    {payLabel((order as any).metodoPagamento) ?? "—"}
+                                                    {payLabel((order as any).metodoPagamento)}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {comprovanteUrl ? (
+                                                        <a href={comprovanteUrl} target="_blank" rel="noopener noreferrer"
+                                                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium">
+                                                            <ExternalLink className="h-3 w-3" /> Ver
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground">—</span>
+                                                    )}
                                                 </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground hidden sm:table-cell whitespace-nowrap">
                                                     {new Date(order.createdAt).toLocaleDateString("pt-MZ")}
@@ -147,39 +171,30 @@ export default function OrdersPage() {
                                                 <TableCell className="text-right">
                                                     <Dialog>
                                                         <DialogTrigger asChild>
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                onClick={() => setSelectedOrder(order)}
-                                                            >
-                                                                <span className="hidden sm:inline">Ver Detalhes</span>
+                                                            <Button variant="outline" size="sm" onClick={() => setSelectedOrder(order)}>
+                                                                <span className="hidden sm:inline">Detalhes</span>
                                                                 <span className="sm:hidden">Ver</span>
                                                             </Button>
                                                         </DialogTrigger>
-                                                        <DialogContent className="max-w-2xl">
+                                                        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                                                             <DialogHeader>
-                                                                <DialogTitle>Detalhes do Pedido</DialogTitle>
+                                                                <DialogTitle>Pedido #{order.id.slice(0, 8).toUpperCase()}</DialogTitle>
                                                                 <DialogDescription>
-                                                                    Pedido #{order.id.slice(0, 8)}
+                                                                    {new Date(order.createdAt).toLocaleString("pt-MZ")}
                                                                 </DialogDescription>
                                                             </DialogHeader>
                                                             {selectedOrder && (
                                                                 <div className="space-y-6">
-                                                                    {/* Alterar Status */}
+                                                                    {/* Estado */}
                                                                     <div className="p-4 rounded-lg border bg-muted/30">
-                                                                        <Label className="text-sm font-semibold">
-                                                                            Alterar Status do Pedido
-                                                                        </Label>
-                                                                        <p className="text-xs text-muted-foreground mb-3 mt-1">
-                                                                            A alteração reflete-se imediatamente na conta do cliente.
+                                                                        <Label className="text-sm font-semibold">Alterar Estado do Pedido</Label>
+                                                                        <p className="text-xs text-muted-foreground mt-1 mb-3">
+                                                                            🔄 A alteração reflete-se imediatamente na conta do cliente.
                                                                         </p>
                                                                         <Select
                                                                             value={selectedOrder.status}
                                                                             onValueChange={(status) => {
-                                                                                updateOrderStatusMutation.mutate({
-                                                                                    id: selectedOrder.id,
-                                                                                    status,
-                                                                                });
+                                                                                updateOrderStatusMutation.mutate({ id: selectedOrder.id, status });
                                                                                 setSelectedOrder({ ...selectedOrder, status });
                                                                             }}
                                                                         >
@@ -187,65 +202,61 @@ export default function OrdersPage() {
                                                                                 <SelectValue />
                                                                             </SelectTrigger>
                                                                             <SelectContent>
-                                                                                <SelectItem value="pendente">🟡 Pendente</SelectItem>
-                                                                                <SelectItem value="confirmado">🟢 Confirmado</SelectItem>
-                                                                                <SelectItem value="enviado">🔵 Enviado</SelectItem>
-                                                                                <SelectItem value="entregue">⚫ Entregue</SelectItem>
+                                                                                <SelectItem value="pendente">🟡 Pendente — aguarda verificação</SelectItem>
+                                                                                <SelectItem value="confirmado">🟢 Confirmado — pagamento verificado</SelectItem>
+                                                                                <SelectItem value="enviado">🔵 Enviado — a caminho do cliente</SelectItem>
+                                                                                <SelectItem value="entregue">⚫ Entregue — pedido concluído</SelectItem>
                                                                                 <SelectItem value="cancelado">🔴 Cancelado</SelectItem>
                                                                             </SelectContent>
                                                                         </Select>
                                                                     </div>
 
+                                                                    {/* Info cliente + entrega */}
                                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                                                         <div>
-                                                                            <p className="font-semibold mb-2">Cliente</p>
+                                                                            <p className="font-semibold mb-2">👤 Cliente</p>
                                                                             <div className="text-muted-foreground space-y-1">
                                                                                 <p>{selectedOrder.nomeCliente}</p>
                                                                                 {selectedOrder.emailCliente && <p>{selectedOrder.emailCliente}</p>}
                                                                                 <p>{selectedOrder.telefoneCliente}</p>
                                                                                 {(selectedOrder as any).metodoPagamento && (
-                                                                                    <p className="font-semibold text-foreground mt-1">
+                                                                                    <p className="font-semibold text-foreground">
                                                                                         💳 {payLabel((selectedOrder as any).metodoPagamento)}
                                                                                     </p>
                                                                                 )}
                                                                             </div>
                                                                         </div>
                                                                         <div>
-                                                                            <p className="font-semibold mb-2">Entrega</p>
+                                                                            <p className="font-semibold mb-2">📍 Entrega</p>
                                                                             <div className="text-muted-foreground space-y-1">
                                                                                 <p>{selectedOrder.enderecoEntrega}</p>
                                                                                 <p>
-                                                                                    {selectedOrder.cidadeEntrega
-                                                                                        ? `${selectedOrder.cidadeEntrega}, `
-                                                                                        : ""}
+                                                                                    {selectedOrder.cidadeEntrega ? `${selectedOrder.cidadeEntrega}, ` : ""}
                                                                                     {selectedOrder.provinciaEntrega}
                                                                                 </p>
                                                                             </div>
                                                                         </div>
                                                                     </div>
 
+                                                                    {/* Valor */}
                                                                     <div className="text-sm">
-                                                                        <p className="font-semibold mb-2">Valor</p>
+                                                                        <p className="font-semibold mb-2">💰 Valor</p>
                                                                         <div className="space-y-1 text-muted-foreground">
                                                                             <div className="flex justify-between">
                                                                                 <span>Subtotal:</span>
-                                                                                <span>
-                                                                                    {new Intl.NumberFormat("pt-MZ", {
-                                                                                        style: "currency",
-                                                                                        currency: "MZN",
-                                                                                    }).format(parseFloat(selectedOrder.subtotal))}
-                                                                                </span>
+                                                                                <span>{new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(parseFloat(selectedOrder.subtotal))}</span>
                                                                             </div>
-                                                                            <div className="flex justify-between font-bold text-foreground text-base">
+                                                                            <div className="flex justify-between font-bold text-foreground text-base border-t pt-1">
                                                                                 <span>Total:</span>
-                                                                                <span>
-                                                                                    {new Intl.NumberFormat("pt-MZ", {
-                                                                                        style: "currency",
-                                                                                        currency: "MZN",
-                                                                                    }).format(parseFloat(selectedOrder.total))}
-                                                                                </span>
+                                                                                <span>{new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(parseFloat(selectedOrder.total))}</span>
                                                                             </div>
                                                                         </div>
+                                                                    </div>
+
+                                                                    {/* Comprovativo */}
+                                                                    <div>
+                                                                        <p className="font-semibold text-sm mb-3">📎 Comprovativo de Pagamento</p>
+                                                                        {renderComprovativo((selectedOrder as any).comprovanteUrl)}
                                                                     </div>
                                                                 </div>
                                                             )}

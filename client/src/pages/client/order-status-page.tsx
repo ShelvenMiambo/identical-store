@@ -254,6 +254,22 @@ export default function OrderStatusPage() {
                             </CardContent>
                         </Card>
 
+                        {/* Proof of payment card */}
+                        {order.comprovanteUrl && (
+                            <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+                                <CardContent className="pt-6">
+                                    <h4 className="font-semibold mb-2 text-green-800 dark:text-green-300">✅ Comprovativo Enviado</h4>
+                                    <p className="text-sm text-muted-foreground mb-3">
+                                        O teu comprovativo foi recebido pela equipa IDENTICAL e está a ser verificado.
+                                    </p>
+                                    <a href={order.comprovanteUrl} target="_blank" rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium">
+                                        Ver comprovativo enviado
+                                    </a>
+                                </CardContent>
+                            </Card>
+                        )}
+
                         {/* Help Card */}
                         <Card className="bg-primary/5 border-primary/10">
                             <CardContent className="pt-6">

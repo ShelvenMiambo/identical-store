@@ -101,7 +101,7 @@ export const orders = pgTable("orders", {
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   desconto: decimal("desconto", { precision: 10, scale: 2 }).default("0").notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  
+
   // Dados de envio
   nomeCliente: text("nome_cliente").notNull(),
   emailCliente: text("email_cliente").notNull(),
@@ -109,14 +109,15 @@ export const orders = pgTable("orders", {
   enderecoEntrega: text("endereco_entrega").notNull(),
   cidadeEntrega: text("cidade_entrega").notNull(),
   provinciaEntrega: text("provincia_entrega").notNull(),
-  
+
   // Pagamento
-  metodoPagamento: text("metodo_pagamento"), // mpesa, emola, cartao
+  metodoPagamento: text("metodo_pagamento"), // mpesa, emola, mbim
+  comprovanteUrl: text("comprovante_url"),   // proof of payment image/pdf URL
   paysuiteTransactionId: text("paysuite_transaction_id"),
   paysuiteStatus: text("paysuite_status"),
-  
+
   cupomCodigo: text("cupom_codigo"),
-  
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

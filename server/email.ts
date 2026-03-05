@@ -277,3 +277,68 @@ export async function enviarEmailPedidoEnviado(order: any): Promise<boolean> {
     `,
   });
 }
+
+/**
+ * Notifica o admin com o comprovativo de pagamento
+ */
+export async function enviarEmailComprovanteAdmin(
+  order: any,
+  items: any[],
+  comprovanteUrl: string
+): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@identical.co.mz';
+  const payLabels: Record<string, string> = { mpesa: 'M-Pesa', emola: 'e-Mola', mbim: 'Millennium BIM' };
+  const metodo = payLabels[order.metodoPagamento] ?? order.metodoPagamento ?? 'Não especificado';
+
+  const isImage = /\.(jpg|jpeg|png|gif|webp|avif|heic)$/i.test(comprovanteUrl);
+  const isPdf = /\.pdf$/i.test(comprovanteUrl);
+  const baseUrl = process.env.BASE_URL || 'https://identical-store-production.up.railway.app';
+  const fullUrl = comprovanteUrl.startsWith('http') ? comprovanteUrl : `${baseUrl}${comprovanteUrl}`;
+
+  const comprovanteHtml = isImage
+    ? `<p><strong>📎 Comprovativo:</strong></p>
+       <a href="${fullUrl}" target="_blank">
+         <img src="${fullUrl}" alt="Comprovativo" style="max-width:480px;border:1px solid #ddd;border-radius:8px;" />
+       </a><br>
+       <a href="${fullUrl}" target="_blank" style="font-size:12px;color:#555;">Ver imagem completa</a>`
+    : `<p><strong>📎 Comprovativo:</strong> <a href="${fullUrl}" target="_blank">${isPdf ? '📄 Abrir PDF' : 'Ver ficheiro'}</a></p>`;
+
+  const itemsList = items
+    .map(i => `<li>${i.nomeProduto} (${i.tamanho}/${i.cor}) &times; ${i.quantidade} — ${parseFloat(i.precoProduto).toFixed(2)} MZN</li>`)
+    .join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;color:#333;">
+    <div style="max-width:600px;margin:0 auto;">
+      <div style="background:#111;color:white;padding:16px 20px;border-radius:6px 6px 0 0;">
+        <h2 style="margin:0;">🛒 IDENTICAL — Novo Pedido com Comprovativo</h2>
+      </div>
+      <div style="background:#f9f9f9;padding:20px;border:1px solid #eee;">
+        <p><strong>Pedido:</strong> #${order.id.slice(0, 8).toUpperCase()}</p>
+        <p><strong>Método:</strong> <span style="background:#e8f5e9;color:#2e7d32;padding:3px 10px;border-radius:20px;font-size:13px;">${metodo}</span></p>
+        <hr>
+        <h3>👤 Cliente</h3>
+        <p>
+          <strong>Nome:</strong> ${order.nomeCliente}<br>
+          <strong>Telef.:</strong> ${order.telefoneCliente}<br>
+          ${order.emailCliente ? `<strong>Email:</strong> ${order.emailCliente}<br>` : ''}
+          <strong>Morada:</strong> ${order.enderecoEntrega}${order.cidadeEntrega ? ', ' + order.cidadeEntrega : ''}, ${order.provinciaEntrega}
+        </p>
+        <hr>
+        <h3>🛒 Itens</h3>
+        <ul>${itemsList}</ul>
+        <p style="font-size:16px;font-weight:bold;">TOTAL: ${parseFloat(order.total).toFixed(2)} MZN</p>
+        <hr>
+        <h3>📎 Comprovativo de Pagamento</h3>
+        ${comprovanteHtml}
+        <hr>
+        <p style="color:#888;font-size:11px;">Email automático da plataforma IDENTICAL. Aceda ao painel admin para alterar o estado do pedido.</p>
+      </div>
+    </div>
+  </body></html>`;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `🛒 Pedido #${order.id.slice(0, 8).toUpperCase()} — ${order.nomeCliente} (${metodo})`,
+    html,
+  });
+}

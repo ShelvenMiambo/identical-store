@@ -18,9 +18,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Redirect } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { ChevronDown, CheckCircle2 } from "lucide-react";
+import { ChevronDown, CheckCircle2, Upload, FileImage, FileText, X } from "lucide-react";
 
-/* ─── Províncias de Moçambique ─── */
+/* ─── Províncias ─── */
 const PROVINCIAS = [
   "Maputo Cidade", "Maputo Província", "Gaza", "Inhambane",
   "Sofala", "Manica", "Tete", "Zambézia", "Nampula",
@@ -33,14 +33,13 @@ const PAYMENT_METHODS = [
     id: "mpesa",
     label: "M-Pesa",
     desc: "Vodacom M-Pesa",
-    color: "border-red-400 bg-red-50 dark:bg-red-950/20",
+    color: "border-red-300 bg-red-50 dark:bg-red-950/20",
     activeColor: "border-red-600 bg-red-100 dark:bg-red-900/40 ring-2 ring-red-400",
+    instructions: "Envie o pagamento para o número M-Pesa da IDENTICAL e anexe o comprovativo.",
     icon: (
-      <svg viewBox="0 0 80 40" className="h-8 w-auto" fill="none">
-        <rect width="80" height="40" rx="6" fill="#E31837" />
-        <text x="8" y="26" fill="white" fontWeight="bold" fontSize="13" fontFamily="Arial">
-          M-PESA
-        </text>
+      <svg viewBox="0 0 80 36" className="h-8 w-auto" fill="none">
+        <rect width="80" height="36" rx="6" fill="#E31837" />
+        <text x="8" y="23" fill="white" fontWeight="bold" fontSize="12" fontFamily="Arial">M-PESA</text>
       </svg>
     ),
   },
@@ -48,14 +47,13 @@ const PAYMENT_METHODS = [
     id: "emola",
     label: "e-Mola",
     desc: "Movitel e-Mola",
-    color: "border-green-400 bg-green-50 dark:bg-green-950/20",
+    color: "border-green-300 bg-green-50 dark:bg-green-950/20",
     activeColor: "border-green-600 bg-green-100 dark:bg-green-900/40 ring-2 ring-green-400",
+    instructions: "Envie o pagamento para o número e-Mola da IDENTICAL e anexe o comprovativo.",
     icon: (
-      <svg viewBox="0 0 80 40" className="h-8 w-auto" fill="none">
-        <rect width="80" height="40" rx="6" fill="#00A651" />
-        <text x="8" y="26" fill="white" fontWeight="bold" fontSize="13" fontFamily="Arial">
-          e-Mola
-        </text>
+      <svg viewBox="0 0 80 36" className="h-8 w-auto" fill="none">
+        <rect width="80" height="36" rx="6" fill="#00A651" />
+        <text x="10" y="23" fill="white" fontWeight="bold" fontSize="12" fontFamily="Arial">e-Mola</text>
       </svg>
     ),
   },
@@ -63,17 +61,14 @@ const PAYMENT_METHODS = [
     id: "mbim",
     label: "Millennium BIM",
     desc: "Cartão / Conta BIM",
-    color: "border-blue-400 bg-blue-50 dark:bg-blue-950/20",
+    color: "border-blue-300 bg-blue-50 dark:bg-blue-950/20",
     activeColor: "border-blue-600 bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-400",
+    instructions: "Faça a transferência para a conta Millennium BIM da IDENTICAL e anexe o comprovativo.",
     icon: (
-      <svg viewBox="0 0 80 40" className="h-8 w-auto" fill="none">
-        <rect width="80" height="40" rx="6" fill="#003087" />
-        <text x="5" y="16" fill="white" fontWeight="bold" fontSize="8" fontFamily="Arial">
-          MILLENNIUM
-        </text>
-        <text x="20" y="30" fill="#FFD700" fontWeight="bold" fontSize="11" fontFamily="Arial">
-          BIM
-        </text>
+      <svg viewBox="0 0 80 36" className="h-8 w-auto" fill="none">
+        <rect width="80" height="36" rx="6" fill="#003087" />
+        <text x="4" y="14" fill="white" fontWeight="bold" fontSize="7" fontFamily="Arial">MILLENNIUM</text>
+        <text x="22" y="27" fill="#FFD700" fontWeight="bold" fontSize="11" fontFamily="Arial">BIM</text>
       </svg>
     ),
   },
@@ -99,8 +94,11 @@ interface CheckoutPageProps {
 
 export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPageProps) {
   const { toast } = useToast();
-  const [step, setStep] = useState(1);           // 1 = dados, 2 = pagamento, 3 = processando
+  const [step, setStep] = useState(1);
   const [selectedPayment, setSelectedPayment] = useState<string>("");
+  const [comprovanteFile, setComprovanteFile] = useState<File | null>(null);
+  const [comprovantePreview, setComprovantePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const form = useForm<CheckoutFormData>({
@@ -118,20 +116,61 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
   const fmt = (v: number) =>
     new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(v);
 
-  /* ── Submit dados (passo 1 → 2) ── */
-  const onSubmitStep1 = (data: CheckoutFormData) => {
-    setStep(2);
+  /* ── Handle comprovativo file ── */
+  const handleComprovanteSelect = (file: File) => {
+    setComprovanteFile(file);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = () => setComprovantePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setComprovantePreview(null); // PDF ou outro
+    }
   };
 
-  /* ── Confirmar pagamento (passo 2 → criar pedido) ── */
-  const handleConfirmPayment = async () => {
+  /* ── Upload do comprovativo para o servidor ── */
+  const uploadComprovativo = async (): Promise<string | null> => {
+    if (!comprovanteFile) return null;
+    setIsUploading(true);
+    try {
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(comprovanteFile);
+      });
+      const resp = await apiRequest("POST", "/api/admin/upload-base64", {
+        filename: comprovanteFile.name,
+        dataUrl,
+      });
+      return resp.url as string;
+    } catch (e: any) {
+      toast({ title: "Erro ao enviar comprovativo", description: e.message, variant: "destructive" });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  /* ── Submit passo 1 → 2 ── */
+  const onSubmitStep1 = () => setStep(2);
+
+  /* ── Passo 2 → 3 ── */
+  const goToStep3 = () => {
     if (!selectedPayment) {
       toast({ title: "Seleciona o método de pagamento", variant: "destructive" });
       return;
     }
+    setStep(3);
+  };
 
+  /* ── Confirmar pedido (passo 3 → submit) ── */
+  const handleConfirmPayment = async () => {
     setIsProcessing(true);
     try {
+      // Upload comprovativo
+      const comprovanteUrl = await uploadComprovativo();
+
       const data = form.getValues();
       const result = await apiRequest("POST", "/api/checkout", {
         ...data,
@@ -140,22 +179,24 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
         subtotal,
         desconto: 0,
         metodoPagamento: selectedPayment,
+        comprovanteUrl: comprovanteUrl ?? undefined,
       });
 
       if (onClearCart) onClearCart();
 
+      const metodo = PAYMENT_METHODS.find(m => m.id === selectedPayment)?.label ?? selectedPayment;
       toast({
-        title: "Pedido criado com sucesso! ✅",
-        description: `Pagamento via ${PAYMENT_METHODS.find(m => m.id === selectedPayment)?.label}. Será contactado para confirmar.`,
+        title: "✅ Pedido enviado com sucesso!",
+        description: `Comprovativo ${comprovanteUrl ? "enviado" : "não anexado"}. A equipa IDENTICAL irá verificar o pagamento ${metodo} e confirmar o pedido.`,
       });
 
       setTimeout(() => {
         window.location.href = result.order_url || `/pedido/${result.order?.id}`;
-      }, 1200);
+      }, 1500);
     } catch (error: any) {
       toast({
         title: "Erro ao processar pedido",
-        description: error.message || "Tente novamente mais tarde.",
+        description: error.message || "Tente novamente.",
         variant: "destructive",
       });
       setIsProcessing(false);
@@ -163,6 +204,8 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
   };
 
   if (cartItems.length === 0) return <Redirect to="/loja" />;
+
+  const selectedMethod = PAYMENT_METHODS.find(m => m.id === selectedPayment);
 
   return (
     <div className="min-h-screen pt-24 pb-16 bg-muted/30">
@@ -173,25 +216,36 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
           <h1 className="text-3xl md:text-4xl font-bold uppercase tracking-tight mb-4">
             Finalizar Compra
           </h1>
-          <div className="flex items-center gap-2 text-sm">
-            <span className={step >= 1 ? "text-primary font-semibold" : "text-muted-foreground"}>
-              1. Dados de Entrega
-            </span>
-            <span className="text-muted-foreground">→</span>
-            <span className={step >= 2 ? "text-primary font-semibold" : "text-muted-foreground"}>
-              2. Pagamento
-            </span>
+          <div className="flex items-center gap-2 text-sm flex-wrap">
+            {[
+              { n: 1, label: "Dados" },
+              { n: 2, label: "Pagamento" },
+              { n: 3, label: "Comprovativo" },
+            ].map(({ n, label }, i, arr) => (
+              <span key={n} className="flex items-center gap-2">
+                <span className={`flex items-center gap-1 ${step >= n ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                  <span className={`w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold
+                    ${step > n ? "bg-primary text-white" : step === n ? "bg-primary/20 text-primary border border-primary" : "bg-muted text-muted-foreground"}`}>
+                    {step > n ? "✓" : n}
+                  </span>
+                  {label}
+                </span>
+                {i < arr.length - 1 && <span className="text-muted-foreground">→</span>}
+              </span>
+            ))}
           </div>
         </div>
 
         <div className="flex flex-col-reverse md:grid md:grid-cols-3 gap-6 md:gap-8">
 
-          {/* ══ Formulário ══ */}
+          {/* ══ Form principal ══ */}
           <div className="md:col-span-2">
             <Card>
               <CardHeader>
                 <CardTitle>
-                  {step === 1 ? "Dados de Entrega" : "Escolhe o Método de Pagamento"}
+                  {step === 1 ? "Dados de Entrega"
+                    : step === 2 ? "Método de Pagamento"
+                      : "Comprovativo de Pagamento"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -200,19 +254,17 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                 {step === 1 && (
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmitStep1)} className="space-y-5">
-
                       <FormField control={form.control} name="nomeCliente" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="uppercase text-xs font-semibold">
                             Nome Completo <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: João Manuel Silva" {...field} data-testid="input-nome" />
+                            <Input placeholder="Ex: João Manuel Silva" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
-
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField control={form.control} name="telefoneCliente" render={({ field }) => (
                           <FormItem>
@@ -220,41 +272,34 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                               Telefone <span className="text-red-500">*</span>
                             </FormLabel>
                             <FormControl>
-                              <Input type="tel" placeholder="Ex: 84 123 4567" {...field} data-testid="input-telefone" />
+                              <Input type="tel" placeholder="Ex: 84 123 4567" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
-
                         <FormField control={form.control} name="emailCliente" render={({ field }) => (
                           <FormItem>
                             <FormLabel className="uppercase text-xs font-semibold">
                               Email <span className="text-muted-foreground font-normal normal-case">(opcional)</span>
                             </FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Ex: joao@gmail.com" {...field} data-testid="input-email" />
+                              <Input type="email" placeholder="Ex: joao@gmail.com" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                       </div>
-
                       <FormField control={form.control} name="enderecoEntrega" render={({ field }) => (
                         <FormItem>
                           <FormLabel className="uppercase text-xs font-semibold">
-                            Endereço / Bairro de Entrega <span className="text-red-500">*</span>
+                            Endereço / Bairro <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Ex: Bairro Polana Cimento, perto do mercado X"
-                              {...field}
-                              data-testid="input-endereco"
-                            />
+                            <Input placeholder="Ex: Bairro Polana Cimento, perto do mercado X" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
-
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FormField control={form.control} name="cidadeEntrega" render={({ field }) => (
                           <FormItem>
@@ -262,12 +307,10 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                               Cidade <span className="text-muted-foreground font-normal normal-case">(opcional)</span>
                             </FormLabel>
                             <FormControl>
-                              <Input placeholder="Ex: Maputo, Matola, Beira…" {...field} data-testid="input-cidade" />
+                              <Input placeholder="Ex: Maputo, Matola…" {...field} />
                             </FormControl>
-                            <FormMessage />
                           </FormItem>
                         )} />
-
                         <FormField control={form.control} name="provinciaEntrega" render={({ field }) => (
                           <FormItem>
                             <FormLabel className="uppercase text-xs font-semibold">
@@ -275,15 +318,10 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                             </FormLabel>
                             <FormControl>
                               <div className="relative">
-                                <select
-                                  {...field}
-                                  data-testid="select-provincia"
-                                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 pr-8"
-                                >
+                                <select {...field}
+                                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 pr-8">
                                   <option value="" disabled>— Escolhe a tua província —</option>
-                                  {PROVINCIAS.map((p) => (
-                                    <option key={p} value={p}>{p}</option>
-                                  ))}
+                                  {PROVINCIAS.map(p => <option key={p} value={p}>{p}</option>)}
                                 </select>
                                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               </div>
@@ -292,61 +330,35 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                           </FormItem>
                         )} />
                       </div>
-
-                      <p className="text-xs text-muted-foreground">
-                        <span className="text-red-500">*</span> Campos obrigatórios
-                      </p>
-
-                      <Button type="submit" className="w-full" size="lg" data-testid="button-continue-payment">
-                        Continuar para Pagamento →
-                      </Button>
+                      <p className="text-xs text-muted-foreground"><span className="text-red-500">*</span> Campos obrigatórios</p>
+                      <Button type="submit" className="w-full" size="lg">Continuar →</Button>
                     </form>
                   </Form>
                 )}
 
-                {/* ── PASSO 2: Método de Pagamento ── */}
+                {/* ── PASSO 2: Escolha o método ── */}
                 {step === 2 && (
                   <div className="space-y-6">
-                    {/* Resumo dos dados */}
+                    {/* Resumo dados */}
                     <div className="text-sm bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border space-y-1">
-                      <p className="font-semibold mb-2">Dados de Entrega:</p>
+                      <p className="font-semibold mb-1">Dados de Entrega:</p>
                       <p><span className="text-muted-foreground">Nome:</span> {form.getValues("nomeCliente")}</p>
-                      <p><span className="text-muted-foreground">Telefone:</span> {form.getValues("telefoneCliente")}</p>
-                      {form.getValues("emailCliente") && (
-                        <p><span className="text-muted-foreground">Email:</span> {form.getValues("emailCliente")}</p>
-                      )}
-                      <p>
-                        <span className="text-muted-foreground">Morada:</span>{" "}
-                        {form.getValues("enderecoEntrega")}
-                        {form.getValues("cidadeEntrega") ? `, ${form.getValues("cidadeEntrega")}` : ""}
-                        {` — ${form.getValues("provinciaEntrega")}`}
-                      </p>
-                      <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setStep(1)}>
-                        ✏️ Editar Dados
-                      </Button>
+                      <p><span className="text-muted-foreground">Tel.:</span> {form.getValues("telefoneCliente")}</p>
+                      <p><span className="text-muted-foreground">Morada:</span> {form.getValues("enderecoEntrega")}{form.getValues("cidadeEntrega") ? `, ${form.getValues("cidadeEntrega")}` : ""} — {form.getValues("provinciaEntrega")}</p>
+                      <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setStep(1)}>✏️ Editar</Button>
                     </div>
-
                     <Separator />
-
-                    {/* Métodos de pagamento */}
                     <div>
-                      <p className="font-semibold text-sm uppercase tracking-wider mb-4">
-                        Seleciona o Método de Pagamento
-                      </p>
+                      <p className="font-semibold text-sm uppercase tracking-wider mb-4">Método de Pagamento</p>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {PAYMENT_METHODS.map((method) => {
                           const isSelected = selectedPayment === method.id;
                           return (
-                            <button
-                              key={method.id}
-                              type="button"
+                            <button key={method.id} type="button"
                               onClick={() => setSelectedPayment(method.id)}
-                              className={`relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer text-left
-                                ${isSelected ? method.activeColor : method.color + " hover:shadow-md"}`}
-                            >
-                              {isSelected && (
-                                <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-green-600" />
-                              )}
+                              className={`relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer
+                                ${isSelected ? method.activeColor : method.color + " hover:shadow-md"}`}>
+                              {isSelected && <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-green-600" />}
                               {method.icon}
                               <div className="text-center">
                                 <p className="font-bold text-sm">{method.label}</p>
@@ -356,12 +368,74 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                           );
                         })}
                       </div>
+                    </div>
+                    <Button className="w-full" size="lg" onClick={goToStep3} disabled={!selectedPayment}>
+                      {selectedPayment ? `Continuar com ${selectedMethod?.label} →` : "Seleciona um método"}
+                    </Button>
+                  </div>
+                )}
 
-                      {selectedPayment && (
-                        <p className="text-sm text-muted-foreground mt-3 text-center">
-                          ℹ️ Após confirmar, a equipa IDENTICAL irá contactar-te para finalizar o pagamento via{" "}
-                          <strong>{PAYMENT_METHODS.find(m => m.id === selectedPayment)?.label}</strong>.
-                        </p>
+                {/* ── PASSO 3: Upload comprovativo ── */}
+                {step === 3 && (
+                  <div className="space-y-6">
+                    {/* Instrução do método escolhido */}
+                    <div className={`flex items-start gap-3 p-4 rounded-xl border-2 ${selectedMethod?.activeColor}`}>
+                      <div className="shrink-0">{selectedMethod?.icon}</div>
+                      <div>
+                        <p className="font-bold">{selectedMethod?.label}</p>
+                        <p className="text-sm text-muted-foreground mt-1">{selectedMethod?.instructions}</p>
+                      </div>
+                      <Button type="button" variant="ghost" size="sm" className="ml-auto shrink-0" onClick={() => setStep(2)}>
+                        Mudar
+                      </Button>
+                    </div>
+
+                    <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-sm">
+                      <p className="font-semibold mb-1">📋 Instruções de Pagamento</p>
+                      <p>Após efectuar o pagamento, anexa abaixo a <strong>screenshot</strong> ou <strong>PDF</strong> de confirmação.
+                        A equipa IDENTICAL irá verificar e confirmar o teu pedido em breve.</p>
+                    </div>
+
+                    {/* Upload area */}
+                    <div>
+                      <p className="font-semibold text-sm uppercase tracking-wider mb-3">
+                        Anexar Comprovativo <span className="text-muted-foreground font-normal normal-case">(recomendado)</span>
+                      </p>
+
+                      {!comprovanteFile ? (
+                        <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed rounded-xl cursor-pointer hover:bg-muted/50 transition-colors">
+                          <Upload className="h-10 w-10 text-muted-foreground" />
+                          <div className="text-center">
+                            <p className="font-medium">Clica para anexar o comprovativo</p>
+                            <p className="text-sm text-muted-foreground mt-1">Imagem (JPG, PNG, WEBP) ou PDF — qualquer ficheiro até 25 MB</p>
+                          </div>
+                          <input type="file" accept="image/*,.pdf" className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleComprovanteSelect(f);
+                            }} />
+                        </label>
+                      ) : (
+                        <div className="relative border rounded-xl p-4 bg-muted/30">
+                          <Button type="button" variant="destructive" size="icon"
+                            className="absolute top-2 right-2 h-7 w-7"
+                            onClick={() => { setComprovanteFile(null); setComprovantePreview(null); }}>
+                            <X className="h-4 w-4" />
+                          </Button>
+
+                          {comprovantePreview ? (
+                            <img src={comprovantePreview} alt="Pré-visualização" className="max-h-48 rounded-lg object-contain mx-auto" />
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <FileText className="h-10 w-10 text-red-500" />
+                              <div>
+                                <p className="font-medium text-sm">{comprovanteFile.name}</p>
+                                <p className="text-xs text-muted-foreground">{(comprovanteFile.size / 1024).toFixed(1)} KB</p>
+                              </div>
+                            </div>
+                          )}
+                          <p className="text-xs text-green-600 mt-3 font-medium text-center">✅ Comprovativo pronto para enviar</p>
+                        </div>
                       )}
                     </div>
 
@@ -369,17 +443,22 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                       className="w-full"
                       size="lg"
                       onClick={handleConfirmPayment}
-                      disabled={isProcessing || !selectedPayment}
+                      disabled={isProcessing || isUploading}
                       data-testid="button-process-payment"
                     >
-                      {isProcessing
-                        ? "A processar…"
-                        : selectedPayment
-                          ? `Confirmar Pedido — ${PAYMENT_METHODS.find(m => m.id === selectedPayment)?.label}`
-                          : "Seleciona um método de pagamento"}
+                      {isUploading ? "A enviar comprovativo…"
+                        : isProcessing ? "A enviar pedido…"
+                          : comprovanteFile ? "✅ Confirmar Pedido com Comprovativo"
+                            : "Confirmar Pedido (sem comprovativo)"}
                     </Button>
+                    {!comprovanteFile && (
+                      <p className="text-xs text-center text-muted-foreground">
+                        Podes confirmar sem comprovativo, mas o processo pode demorar mais tempo.
+                      </p>
+                    )}
                   </div>
                 )}
+
               </CardContent>
             </Card>
           </div>
@@ -387,9 +466,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
           {/* ══ Resumo do Pedido ══ */}
           <div>
             <Card className="sticky top-24">
-              <CardHeader>
-                <CardTitle>Resumo do Pedido</CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle>Resumo do Pedido</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   {cartItems.map((item, index) => (
@@ -400,9 +477,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm leading-tight">{item.nomeProduto}</p>
                         <p className="text-xs text-muted-foreground">{item.tamanho} / {item.cor} × {item.quantidade}</p>
-                        <p className="text-xs font-semibold mt-0.5">
-                          {fmt(parseFloat(item.precoProduto) * item.quantidade)}
-                        </p>
+                        <p className="text-xs font-semibold mt-0.5">{fmt(parseFloat(item.precoProduto) * item.quantidade)}</p>
                       </div>
                     </div>
                   ))}
@@ -411,18 +486,17 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span data-testid="text-checkout-subtotal">{fmt(subtotal)}</span>
+                    <span>{fmt(subtotal)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span data-testid="text-checkout-total">{fmt(total)}</span>
+                    <span>{fmt(total)}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-
         </div>
       </div>
     </div>
