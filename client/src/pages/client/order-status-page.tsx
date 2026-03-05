@@ -13,6 +13,8 @@ export default function OrderStatusPage() {
     const { data: order, isLoading, error } = useQuery<any>({
         queryKey: [`/api/orders/${id}`],
         retry: 3,
+        refetchInterval: 30_000,      // Actualiza a cada 30 segundos automaticamente
+        refetchOnWindowFocus: true,    // Actualiza quando o cliente volta ao separador
     });
 
     if (isLoading) {

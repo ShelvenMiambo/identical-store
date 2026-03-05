@@ -117,17 +117,20 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get order by ID (must be user's order)
-  app.get("/api/orders/:id", requireAuth, async (req, res, next) => {
+  // Get order by ID — public (guest tracking by UUID) or authenticated user/admin
+  app.get("/api/orders/:id", async (req, res, next) => {
     try {
       const order = await storage.getOrder(req.params.id);
       if (!order) {
         return res.status(404).send("Pedido não encontrado");
       }
-      if (order.userId !== req.user!.id && !req.user!.isAdmin) {
+      // Authenticated non-admin users can only see their own orders
+      if (req.user && !req.user.isAdmin && order.userId && order.userId !== req.user.id) {
         return res.sendStatus(403);
       }
-      res.json(order);
+      // Include order items in the response
+      const items = await storage.getOrderItems(order.id);
+      res.json({ ...order, items });
     } catch (error) {
       next(error);
     }
