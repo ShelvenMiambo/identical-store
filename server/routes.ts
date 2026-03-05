@@ -480,7 +480,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "dataUrl obrigatório" });
       }
 
-      // Se Cloudinary está configurado, usar Cloudinary
+      // Se Cloudinary está configurado, usar Cloudinary (aceita qualquer formato nativo)
       if (process.env.CLOUDINARY_CLOUD_NAME) {
         const { v2: cloudinary } = await import('cloudinary');
         cloudinary.config({
@@ -491,31 +491,40 @@ export function registerRoutes(app: Express): Server {
 
         const result = await cloudinary.uploader.upload(dataUrl, {
           folder: 'identical',
+          resource_type: 'auto',
         });
 
         return res.status(201).json({ url: result.secure_url });
       }
 
-      // Fallback: guardar localmente (desenvolvimento)
-      const match = dataUrl.match(/^data:(.+);base64,(.*)$/);
+      // Fallback: guardar localmente - aceita qualquer tipo de imagem
+      const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
       if (!match) {
-        return res.status(400).json({ message: "Formato inválido" });
+        return res.status(400).json({ message: "Formato de dataUrl inválido" });
       }
       const mime = match[1];
       const base64 = match[2];
       const buffer = Buffer.from(base64, "base64");
 
-      const ext = mime === "image/png" ? ".png" : mime === "image/jpeg" ? ".jpg" : "";
-      if (!ext) {
-        return res.status(400).json({ message: "Tipo de imagem não suportado" });
-      }
+      // Derivar extensão de qualquer MIME do tipo image/*
+      const mimeToExt: Record<string, string> = {
+        "image/jpeg": ".jpg", "image/jpg": ".jpg",
+        "image/png": ".png", "image/webp": ".webp",
+        "image/gif": ".gif", "image/avif": ".avif",
+        "image/heic": ".heic", "image/heif": ".heif",
+        "image/svg+xml": ".svg", "image/bmp": ".bmp", "image/tiff": ".tiff",
+      };
+      const ext = mimeToExt[mime] ?? `.${(mime.split("/")[1] ?? "jpg").split("+")[0]}`;
 
-      const safeName = (filename && typeof filename === "string" ? filename.replace(/[^a-zA-Z0-9-_]/g, "_") : "upload")
-        + "_" + Date.now() + ext;
+      const safeName =
+        (filename && typeof filename === "string"
+          ? filename.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9-_]/g, "_")
+          : "upload") +
+        "_" + Date.now() + ext;
+
       const assetsDir = path.join(process.cwd(), "attached_assets");
       if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
-      const filePath = path.join(assetsDir, safeName);
-      fs.writeFileSync(filePath, buffer);
+      fs.writeFileSync(path.join(assetsDir, safeName), buffer);
       return res.status(201).json({ url: "/attached_assets/" + safeName });
     } catch (error) {
       next(error);
