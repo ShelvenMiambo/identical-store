@@ -20,7 +20,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import {
     Select,
     SelectContent,
@@ -43,14 +42,45 @@ export default function OrdersPage() {
     const updateOrderStatusMutation = useMutation({
         mutationFn: async ({ id, status }: { id: string; status: string }) =>
             apiRequest("PUT", `/api/admin/orders/${id}/status`, { status }),
-        onSuccess: () => {
+        onSuccess: (_, { id }) => {
+            // Invalidar lista admin + pedido individual → reflete na página do cliente imediatamente
             queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
-            toast({ title: "Status do pedido atualizado!" });
+            queryClient.invalidateQueries({ queryKey: [`/api/orders/${id}`] });
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+            toast({ title: "✅ Status do pedido atualizado!" });
         },
         onError: (error: any) => {
             toast({ title: "Erro ao atualizar status", description: error.message, variant: "destructive" });
         },
     });
+
+    /* Badges coloridos por estado */
+    const statusBadge = (status: string) => {
+        const map: Record<string, { label: string; cls: string }> = {
+            pendente: { label: "Pendente", cls: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+            confirmado: { label: "Confirmado", cls: "bg-green-100 text-green-800 border-green-300" },
+            enviado: { label: "Enviado", cls: "bg-blue-100 text-blue-800 border-blue-300" },
+            entregue: { label: "Entregue", cls: "bg-slate-100 text-slate-700 border-slate-300" },
+            cancelado: { label: "Cancelado", cls: "bg-red-100 text-red-700 border-red-300" },
+        };
+        const s = map[status] ?? { label: status, cls: "bg-muted text-muted-foreground" };
+        return (
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border uppercase tracking-wide ${s.cls}`}>
+                {s.label}
+            </span>
+        );
+    };
+
+    /* Label do método de pagamento */
+    const payLabel = (m?: string | null) => {
+        if (!m) return null;
+        const labels: Record<string, string> = {
+            mpesa: "M-Pesa",
+            emola: "e-Mola",
+            mbim: "Millennium BIM",
+        };
+        return labels[m] ?? m;
+    };
 
     return (
         <div>
@@ -81,6 +111,7 @@ export default function OrdersPage() {
                                         <TableHead>Cliente</TableHead>
                                         <TableHead>Total</TableHead>
                                         <TableHead>Status</TableHead>
+                                        <TableHead>Pagamento</TableHead>
                                         <TableHead className="hidden sm:table-cell">Data</TableHead>
                                         <TableHead className="text-right">Ações</TableHead>
                                     </TableRow>
@@ -97,21 +128,18 @@ export default function OrdersPage() {
                                                 <TableCell className="font-mono text-xs whitespace-nowrap">
                                                     #{order.id.slice(0, 8)}
                                                 </TableCell>
-                                                <TableCell className="max-w-[120px] truncate">{order.nomeCliente}</TableCell>
+                                                <TableCell>
+                                                    <div>
+                                                        <p className="font-medium text-sm">{order.nomeCliente}</p>
+                                                        <p className="text-xs text-muted-foreground">{order.telefoneCliente}</p>
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell className="font-semibold whitespace-nowrap">{totalFormatado}</TableCell>
                                                 <TableCell>
-                                                    <Badge
-                                                        variant={
-                                                            order.status === "confirmado"
-                                                                ? "default"
-                                                                : order.status === "entregue"
-                                                                    ? "outline"
-                                                                    : "secondary"
-                                                        }
-                                                        className="uppercase text-xs"
-                                                    >
-                                                        {order.status}
-                                                    </Badge>
+                                                    {statusBadge(order.status)}
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">
+                                                    {payLabel((order as any).metodoPagamento) ?? "—"}
                                                 </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground hidden sm:table-cell whitespace-nowrap">
                                                     {new Date(order.createdAt).toLocaleDateString("pt-MZ")}
@@ -137,12 +165,16 @@ export default function OrdersPage() {
                                                             </DialogHeader>
                                                             {selectedOrder && (
                                                                 <div className="space-y-6">
-                                                                    <div>
+                                                                    {/* Alterar Status */}
+                                                                    <div className="p-4 rounded-lg border bg-muted/30">
                                                                         <Label className="text-sm font-semibold">
-                                                                            Alterar Status
+                                                                            Alterar Status do Pedido
                                                                         </Label>
+                                                                        <p className="text-xs text-muted-foreground mb-3 mt-1">
+                                                                            A alteração reflete-se imediatamente na conta do cliente.
+                                                                        </p>
                                                                         <Select
-                                                                            defaultValue={selectedOrder.status}
+                                                                            value={selectedOrder.status}
                                                                             onValueChange={(status) => {
                                                                                 updateOrderStatusMutation.mutate({
                                                                                     id: selectedOrder.id,
@@ -151,15 +183,15 @@ export default function OrdersPage() {
                                                                                 setSelectedOrder({ ...selectedOrder, status });
                                                                             }}
                                                                         >
-                                                                            <SelectTrigger className="w-full mt-2">
+                                                                            <SelectTrigger className="w-full">
                                                                                 <SelectValue />
                                                                             </SelectTrigger>
                                                                             <SelectContent>
-                                                                                <SelectItem value="pendente">Pendente</SelectItem>
-                                                                                <SelectItem value="confirmado">Confirmado</SelectItem>
-                                                                                <SelectItem value="enviado">Enviado</SelectItem>
-                                                                                <SelectItem value="entregue">Entregue</SelectItem>
-                                                                                <SelectItem value="cancelado">Cancelado</SelectItem>
+                                                                                <SelectItem value="pendente">🟡 Pendente</SelectItem>
+                                                                                <SelectItem value="confirmado">🟢 Confirmado</SelectItem>
+                                                                                <SelectItem value="enviado">🔵 Enviado</SelectItem>
+                                                                                <SelectItem value="entregue">⚫ Entregue</SelectItem>
+                                                                                <SelectItem value="cancelado">🔴 Cancelado</SelectItem>
                                                                             </SelectContent>
                                                                         </Select>
                                                                     </div>
@@ -167,22 +199,28 @@ export default function OrdersPage() {
                                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                                                         <div>
                                                                             <p className="font-semibold mb-2">Cliente</p>
-                                                                            <p className="text-muted-foreground">
-                                                                                {selectedOrder.nomeCliente}
-                                                                                <br />
-                                                                                {selectedOrder.emailCliente}
-                                                                                <br />
-                                                                                {selectedOrder.telefoneCliente}
-                                                                            </p>
+                                                                            <div className="text-muted-foreground space-y-1">
+                                                                                <p>{selectedOrder.nomeCliente}</p>
+                                                                                {selectedOrder.emailCliente && <p>{selectedOrder.emailCliente}</p>}
+                                                                                <p>{selectedOrder.telefoneCliente}</p>
+                                                                                {(selectedOrder as any).metodoPagamento && (
+                                                                                    <p className="font-semibold text-foreground mt-1">
+                                                                                        💳 {payLabel((selectedOrder as any).metodoPagamento)}
+                                                                                    </p>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                         <div>
                                                                             <p className="font-semibold mb-2">Entrega</p>
-                                                                            <p className="text-muted-foreground">
-                                                                                {selectedOrder.enderecoEntrega}
-                                                                                <br />
-                                                                                {selectedOrder.cidadeEntrega},{" "}
-                                                                                {selectedOrder.provinciaEntrega}
-                                                                            </p>
+                                                                            <div className="text-muted-foreground space-y-1">
+                                                                                <p>{selectedOrder.enderecoEntrega}</p>
+                                                                                <p>
+                                                                                    {selectedOrder.cidadeEntrega
+                                                                                        ? `${selectedOrder.cidadeEntrega}, `
+                                                                                        : ""}
+                                                                                    {selectedOrder.provinciaEntrega}
+                                                                                </p>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
 

@@ -43,7 +43,7 @@ export default function OrderStatusPage() {
                     icon: <Clock className="h-8 w-8 text-yellow-500" />,
                     label: "Aguardando Pagamento",
                     color: "bg-yellow-500/10 text-yellow-600 border-yellow-200",
-                    description: "O seu pedido foi recebido e estamos aguardando a confirmação do pagamento pelo PaySuite.",
+                    description: "O seu pedido foi recebido! A equipa IDENTICAL irá contactar-te brevemente para confirmar o pagamento.",
                     step: 1
                 };
             case "confirmado":
@@ -152,8 +152,8 @@ export default function OrderStatusPage() {
                                                 <div
                                                     key={step}
                                                     className={`w-4 h-4 rounded-full border-2 ${step <= statusConfig.step
-                                                            ? 'bg-primary border-primary'
-                                                            : 'bg-background border-muted'
+                                                        ? 'bg-primary border-primary'
+                                                        : 'bg-background border-muted'
                                                         }`}
                                                 ></div>
                                             ))}
@@ -234,16 +234,22 @@ export default function OrderStatusPage() {
                             </CardHeader>
                             <CardContent className="space-y-4 text-sm">
                                 <div>
-                                    <p className="font-semibold">{order.nomeCompleto}</p>
-                                    <p className="text-muted-foreground">{order.email}</p>
-                                    <p className="text-muted-foreground">{order.telefone}</p>
+                                    <p className="font-semibold">{order.nomeCliente}</p>
+                                    {order.emailCliente && <p className="text-muted-foreground">{order.emailCliente}</p>}
+                                    <p className="text-muted-foreground">{order.telefoneCliente}</p>
+                                    {order.metodoPagamento && (
+                                        <p className="text-xs mt-1 font-medium capitalize bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded inline-block">
+                                            💳 {order.metodoPagamento === 'mpesa' ? 'M-Pesa' : order.metodoPagamento === 'emola' ? 'e-Mola' : 'Millennium BIM'}
+                                        </p>
+                                    )}
                                 </div>
                                 <Separator />
                                 <div>
                                     <p className="font-semibold">Endereço</p>
-                                    <p className="text-muted-foreground">{order.endereco}</p>
-                                    <p className="text-muted-foreground">{order.cidade}, {order.provincia}</p>
-                                    {order.codigoPostal && <p className="text-muted-foreground">{order.codigoPostal}</p>}
+                                    <p className="text-muted-foreground">{order.enderecoEntrega}</p>
+                                    <p className="text-muted-foreground">
+                                        {order.cidadeEntrega ? `${order.cidadeEntrega}, ` : ""}{order.provinciaEntrega}
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
