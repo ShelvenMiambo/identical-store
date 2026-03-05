@@ -13,282 +13,274 @@ export default function OrderStatusPage() {
     const { data: order, isLoading, error } = useQuery<any>({
         queryKey: [`/api/orders/${id}`],
         retry: 3,
-        refetchInterval: 30_000,      // Actualiza a cada 30 segundos automaticamente
-        refetchOnWindowFocus: true,    // Actualiza quando o cliente volta ao separador
+        refetchInterval: 30_000,
+        refetchOnWindowFocus: true,
     });
 
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
             </div>
         );
     }
 
     if (error || !order) {
         return (
-            <div className="container mx-auto px-4 py-16 text-center">
-                <XCircle className="mx-auto h-16 w-16 text-destructive mb-4" />
-                <h1 className="text-2xl font-bold mb-2">Pedido não encontrado</h1>
-                <p className="text-muted-foreground mb-8">Não conseguimos encontrar os detalhes do pedido #{id}.</p>
-                <Link href="/loja">
-                    <Button>Voltar para a Loja</Button>
-                </Link>
+            <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+                <XCircle className="mx-auto h-14 w-14 text-destructive mb-4" />
+                <h1 className="text-xl sm:text-2xl font-bold mb-2">Pedido não encontrado</h1>
+                <p className="text-muted-foreground mb-6 text-sm">Não conseguimos encontrar o pedido #{id?.slice(0, 8)}.</p>
+                <Link href="/loja"><Button>Voltar para a Loja</Button></Link>
             </div>
         );
     }
 
+    const fmt = (v: string | number) =>
+        parseFloat(String(v)).toLocaleString("pt-MZ", { style: "currency", currency: "MZN" });
+
+    const payLabel = (m?: string | null) =>
+        ({ mpesa: "M-Pesa", emola: "e-Mola", mbim: "Millennium BIM" }[m ?? ""] ?? m ?? "");
+
     const getStatusConfig = (status: string) => {
         switch (status) {
-            case "pendente":
-                return {
-                    icon: <Clock className="h-8 w-8 text-yellow-500" />,
-                    label: "Aguardando Pagamento",
-                    color: "bg-yellow-500/10 text-yellow-600 border-yellow-200",
-                    description: "O seu pedido foi recebido! A equipa IDENTICAL irá contactar-te brevemente para confirmar o pagamento.",
-                    step: 1
-                };
-            case "confirmado":
-                return {
-                    icon: <CheckCircle2 className="h-8 w-8 text-green-500" />,
-                    label: "Pagamento Confirmado",
-                    color: "bg-green-500/10 text-green-600 border-green-200",
-                    description: "O seu pagamento foi confirmado! Estamos agora a preparar o seu pedido para envio.",
-                    step: 2
-                };
-            case "enviado":
-                return {
-                    icon: <Truck className="h-8 w-8 text-blue-500" />,
-                    label: "Pedido Enviado",
-                    color: "bg-blue-500/10 text-blue-600 border-blue-200",
-                    description: "O seu pedido já saiu do nosso armazém e está a caminho da sua morada.",
-                    step: 3
-                };
-            case "entregue":
-                return {
-                    icon: <Package className="h-8 w-8 text-primary" />,
-                    label: "Pedido Entregue",
-                    color: "bg-primary/10 text-primary border-primary/20",
-                    description: "O pedido foi entregue com sucesso. Esperamos que goste da sua nova peça IDENTICAL!",
-                    step: 4
-                };
-            case "cancelado":
-                return {
-                    icon: <XCircle className="h-8 w-8 text-destructive" />,
-                    label: "Pedido Cancelado",
-                    color: "bg-destructive/10 text-destructive border-destructive/20",
-                    description: "Este pedido foi cancelado. Se tiver alguma dúvida, por favor contacte o nosso suporte.",
-                    step: 0
-                };
-            default:
-                return {
-                    icon: <Clock className="h-8 w-8 text-muted-foreground" />,
-                    label: status,
-                    color: "bg-muted text-muted-foreground",
-                    description: "O status do seu pedido está a ser processado.",
-                    step: 1
-                };
+            case "pendente": return {
+                icon: <Clock className="h-7 w-7 sm:h-8 sm:w-8 text-yellow-500" />,
+                label: "Aguardando Verificação",
+                color: "bg-yellow-500/10 text-yellow-700 border-yellow-300 dark:text-yellow-300 dark:border-yellow-700",
+                description: "O teu pedido foi recebido! A equipa IDENTICAL irá verificar o comprovativo de pagamento e confirmar em breve.",
+                step: 1,
+            };
+            case "confirmado": return {
+                icon: <CheckCircle2 className="h-7 w-7 sm:h-8 sm:w-8 text-green-500" />,
+                label: "Pagamento Confirmado",
+                color: "bg-green-500/10 text-green-700 border-green-300 dark:text-green-300 dark:border-green-700",
+                description: "O teu pagamento foi confirmado! Estamos a preparar o teu pedido para envio.",
+                step: 2,
+            };
+            case "enviado": return {
+                icon: <Truck className="h-7 w-7 sm:h-8 sm:w-8 text-blue-500" />,
+                label: "Pedido Enviado 🚚",
+                color: "bg-blue-500/10 text-blue-700 border-blue-300 dark:text-blue-300 dark:border-blue-700",
+                description: "O teu pedido já saiu do nosso armazém e está a caminho da tua morada!",
+                step: 3,
+            };
+            case "entregue": return {
+                icon: <Package className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />,
+                label: "Entregue ✅",
+                color: "bg-primary/10 text-primary border-primary/30",
+                description: "Pedido entregue com sucesso. Obrigado por escolheres a IDENTICAL! 🎉",
+                step: 4,
+            };
+            case "cancelado": return {
+                icon: <XCircle className="h-7 w-7 sm:h-8 sm:w-8 text-destructive" />,
+                label: "Cancelado",
+                color: "bg-destructive/10 text-destructive border-destructive/30",
+                description: "Este pedido foi cancelado. Se tiveres dúvidas, contacta o nosso suporte.",
+                step: 0,
+            };
+            default: return {
+                icon: <Clock className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground" />,
+                label: status,
+                color: "bg-muted text-muted-foreground",
+                description: "O status do teu pedido está a ser processado.",
+                step: 1,
+            };
         }
     };
 
     const statusConfig = getStatusConfig(order.status);
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-            <Link href="/loja">
-                <Button variant="ghost" className="mb-6 gap-2">
-                    <ChevronLeft className="h-4 w-4" />
-                    Continuar a Comprar
-                </Button>
-            </Link>
+        <div className="min-h-screen bg-muted/20 pt-20 pb-12">
+            <div className="mx-auto px-3 sm:px-6 max-w-4xl">
+                {/* Back button */}
+                <Link href="/loja">
+                    <Button variant="ghost" size="sm" className="mb-4 gap-1.5 h-8 text-xs sm:text-sm -ml-2">
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        Continuar a Comprar
+                    </Button>
+                </Link>
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-            >
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Pedido #{order.id.slice(0, 8)}</h1>
-                        <p className="text-muted-foreground">
-                            Realizado em {new Date(order.createdAt).toLocaleDateString('pt-MZ', {
-                                day: '2-digit',
-                                month: 'long',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
-                        </p>
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-5 gap-2">
+                        <div>
+                            <h1 className="text-xl sm:text-3xl font-bold tracking-tight">
+                                Pedido #{order.id.slice(0, 8).toUpperCase()}
+                            </h1>
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                                {new Date(order.createdAt).toLocaleDateString("pt-MZ", {
+                                    day: "2-digit", month: "short", year: "numeric",
+                                    hour: "2-digit", minute: "2-digit",
+                                })}
+                            </p>
+                        </div>
+                        <Badge variant="outline" className={`text-xs sm:text-sm px-3 py-1.5 font-semibold self-start ${statusConfig.color}`}>
+                            {statusConfig.label}
+                        </Badge>
                     </div>
-                    <Badge variant="outline" className={`text-sm px-3 py-1 font-medium ${statusConfig.color}`}>
-                        {statusConfig.label}
-                    </Badge>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-2 space-y-6">
-                        {/* Status Card */}
-                        <Card className="border-none shadow-sm bg-muted/30">
-                            <CardContent className="pt-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-background rounded-full shadow-sm">
-                                        {statusConfig.icon}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-semibold mb-1">{statusConfig.label}</h3>
-                                        <p className="text-muted-foreground text-sm leading-relaxed">
-                                            {statusConfig.description}
-                                        </p>
-                                    </div>
-                                </div>
+                    {/* Grid — col-span em desktop, stack em mobile */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
 
-                                {order.status !== 'cancelado' && (
-                                    <div className="mt-8 relative">
-                                        <div className="absolute top-1/2 left-0 w-full h-1 bg-muted -translate-y-1/2 z-0"></div>
-                                        <div
-                                            className="absolute top-1/2 left-0 h-1 bg-primary -translate-y-1/2 z-0 transition-all duration-1000"
-                                            style={{ width: `${(statusConfig.step / 4) * 100}%` }}
-                                        ></div>
-                                        <div className="relative z-10 flex justify-between">
-                                            {[1, 2, 3, 4].map((step) => (
-                                                <div
-                                                    key={step}
-                                                    className={`w-4 h-4 rounded-full border-2 ${step <= statusConfig.step
-                                                        ? 'bg-primary border-primary'
-                                                        : 'bg-background border-muted'
-                                                        }`}
-                                                ></div>
-                                            ))}
+                        {/* ─ Coluna principal ─ */}
+                        <div className="md:col-span-2 space-y-4">
+
+                            {/* Status card */}
+                            <Card className="border-none shadow-sm bg-muted/30">
+                                <CardContent className="pt-4 sm:pt-6 pb-5">
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-2 sm:p-3 bg-background rounded-full shadow-sm shrink-0">
+                                            {statusConfig.icon}
                                         </div>
-                                        <div className="flex justify-between mt-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                                            <span>Recebido</span>
-                                            <span>Preparando</span>
-                                            <span>Enviado</span>
-                                            <span>Entregue</span>
+                                        <div>
+                                            <h3 className="text-base sm:text-lg font-semibold">{statusConfig.label}</h3>
+                                            <p className="text-muted-foreground text-sm leading-relaxed mt-0.5">
+                                                {statusConfig.description}
+                                            </p>
                                         </div>
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
 
-                        {/* Items Card */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                    <ShoppingBag className="h-5 w-5" />
-                                    Itens do Pedido
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {order.items?.map((item: any) => (
-                                    <div key={item.id} className="flex gap-4">
-                                        <div className="h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
-                                            <img
-                                                src={item.imagemProduto}
-                                                alt={item.nomeProduto}
-                                                className="h-full w-full object-cover"
+                                    {/* Progress bar */}
+                                    {order.status !== "cancelado" && (
+                                        <div className="mt-6 sm:mt-8 relative px-2">
+                                            <div className="absolute top-2 left-2 right-2 h-1 bg-muted rounded-full" />
+                                            <div
+                                                className="absolute top-2 left-2 h-1 bg-primary rounded-full transition-all duration-1000"
+                                                style={{ width: `calc(${(statusConfig.step / 4) * 100}% - 16px)` }}
                                             />
-                                        </div>
-                                        <div className="flex-1 flex flex-col justify-center">
-                                            <h4 className="font-medium">{item.nomeProduto}</h4>
-                                            <p className="text-sm text-muted-foreground">
-                                                Tamanho: {item.tamanho} | Cor: {item.cor}
-                                            </p>
-                                            <p className="text-sm font-medium mt-1">
-                                                {item.quantidade} x {parseFloat(item.precoProduto).toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center font-semibold">
-                                            {(item.quantidade * parseFloat(item.precoProduto)).toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}
-                                        </div>
-                                    </div>
-                                ))}
-
-                                <Separator className="my-4" />
-
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">Subtotal</span>
-                                        <span>{parseFloat(order.subtotal).toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}</span>
-                                    </div>
-                                    {parseFloat(order.desconto) > 0 && (
-                                        <div className="flex justify-between text-sm text-green-600">
-                                            <span>Desconto</span>
-                                            <span>-{parseFloat(order.desconto).toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}</span>
+                                            <div className="relative z-10 flex justify-between">
+                                                {[1, 2, 3, 4].map((step) => (
+                                                    <div key={step}
+                                                        className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 transition-all
+                                                            ${step <= statusConfig.step
+                                                                ? "bg-primary border-primary"
+                                                                : "bg-background border-muted"}`} />
+                                                ))}
+                                            </div>
+                                            <div className="flex justify-between mt-2 text-[9px] sm:text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                <span>Recebido</span>
+                                                <span>Confirmado</span>
+                                                <span>Enviado</span>
+                                                <span>Entregue</span>
+                                            </div>
                                         </div>
                                     )}
-                                    <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                                        <span>Total</span>
-                                        <span className="text-primary">
-                                            {parseFloat(order.total).toLocaleString('pt-MZ', { style: 'currency', currency: 'MZN' })}
-                                        </span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="space-y-6">
-                        {/* Customer Info */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-lg">Dados de Entrega</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4 text-sm">
-                                <div>
-                                    <p className="font-semibold">{order.nomeCliente}</p>
-                                    {order.emailCliente && <p className="text-muted-foreground">{order.emailCliente}</p>}
-                                    <p className="text-muted-foreground">{order.telefoneCliente}</p>
-                                    {order.metodoPagamento && (
-                                        <p className="text-xs mt-1 font-medium capitalize bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded inline-block">
-                                            💳 {order.metodoPagamento === 'mpesa' ? 'M-Pesa' : order.metodoPagamento === 'emola' ? 'e-Mola' : 'Millennium BIM'}
-                                        </p>
-                                    )}
-                                </div>
-                                <Separator />
-                                <div>
-                                    <p className="font-semibold">Endereço</p>
-                                    <p className="text-muted-foreground">{order.enderecoEntrega}</p>
-                                    <p className="text-muted-foreground">
-                                        {order.cidadeEntrega ? `${order.cidadeEntrega}, ` : ""}{order.provinciaEntrega}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Proof of payment card */}
-                        {order.comprovanteUrl && (
-                            <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
-                                <CardContent className="pt-6">
-                                    <h4 className="font-semibold mb-2 text-green-800 dark:text-green-300">✅ Comprovativo Enviado</h4>
-                                    <p className="text-sm text-muted-foreground mb-3">
-                                        O teu comprovativo foi recebido pela equipa IDENTICAL e está a ser verificado.
-                                    </p>
-                                    <a href={order.comprovanteUrl} target="_blank" rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium">
-                                        Ver comprovativo enviado
-                                    </a>
                                 </CardContent>
                             </Card>
-                        )}
 
-                        {/* Help Card */}
-                        <Card className="bg-primary/5 border-primary/10">
-                            <CardContent className="pt-6">
-                                <h4 className="font-semibold mb-2">Precisa de ajuda?</h4>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    Se tiver qualquer dúvida sobre o seu pedido, entre em contacto connosco.
-                                </p>
-                                <Link href="/contacto">
-                                    <Button variant="outline" className="w-full border-primary/20 hover:bg-primary/10">
-                                        Contactar Suporte
-                                    </Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
+                            {/* Items card */}
+                            <Card>
+                                <CardHeader className="px-4 sm:px-6 py-3 sm:py-4">
+                                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                                        <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
+                                        Itens do Pedido
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent className="px-4 sm:px-6 pb-4 space-y-3 sm:space-y-4">
+                                    {order.items?.map((item: any) => (
+                                        <div key={item.id} className="flex gap-3 sm:gap-4">
+                                            <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                                                <img src={item.imagemProduto} alt={item.nomeProduto}
+                                                    className="h-full w-full object-cover" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-medium text-sm sm:text-base truncate">{item.nomeProduto}</h4>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {item.tamanho} / {item.cor} × {item.quantidade}
+                                                </p>
+                                                <p className="text-xs sm:text-sm font-medium mt-0.5">
+                                                    {fmt(item.precoProduto)} cada
+                                                </p>
+                                            </div>
+                                            <div className="font-semibold text-sm sm:text-base text-right whitespace-nowrap">
+                                                {fmt(item.quantidade * parseFloat(item.precoProduto))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <Separator />
+                                    <div className="space-y-1.5 text-sm">
+                                        <div className="flex justify-between text-muted-foreground">
+                                            <span>Subtotal</span>
+                                            <span>{fmt(order.subtotal)}</span>
+                                        </div>
+                                        {parseFloat(order.desconto) > 0 && (
+                                            <div className="flex justify-between text-green-600">
+                                                <span>Desconto</span>
+                                                <span>-{fmt(order.desconto)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between font-bold text-base sm:text-lg pt-2 border-t">
+                                            <span>Total</span>
+                                            <span className="text-primary">{fmt(order.total)}</span>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* ─ Sidebar ─ */}
+                        <div className="space-y-4">
+                            {/* Dados de entrega */}
+                            <Card>
+                                <CardHeader className="px-4 sm:px-6 py-3"><CardTitle className="text-sm sm:text-base">Dados de Entrega</CardTitle></CardHeader>
+                                <CardContent className="px-4 sm:px-6 pb-4 space-y-3 text-sm">
+                                    <div>
+                                        <p className="font-semibold">{order.nomeCliente}</p>
+                                        {order.emailCliente && <p className="text-muted-foreground text-xs">{order.emailCliente}</p>}
+                                        <p className="text-muted-foreground">{order.telefoneCliente}</p>
+                                        {order.metodoPagamento && (
+                                            <span className="inline-block mt-1.5 text-xs font-semibold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                                                💳 {payLabel(order.metodoPagamento)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <Separator />
+                                    <div>
+                                        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-1">Morada</p>
+                                        <p className="text-sm">{order.enderecoEntrega}</p>
+                                        <p className="text-muted-foreground text-xs">
+                                            {order.cidadeEntrega ? `${order.cidadeEntrega}, ` : ""}{order.provinciaEntrega}
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Comprovativo */}
+                            {order.comprovanteUrl && (
+                                <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+                                    <CardContent className="pt-4 px-4 sm:px-6 pb-4">
+                                        <h4 className="font-semibold text-sm text-green-800 dark:text-green-300 mb-1">✅ Comprovativo Enviado</h4>
+                                        <p className="text-xs text-muted-foreground mb-2">
+                                            A equipa IDENTICAL está a verificar o teu pagamento.
+                                        </p>
+                                        <a href={order.comprovanteUrl} target="_blank" rel="noopener noreferrer"
+                                            className="text-xs text-primary font-medium hover:underline">
+                                            Ver comprovativo →
+                                        </a>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Ajuda */}
+                            <Card className="bg-primary/5 border-primary/10">
+                                <CardContent className="pt-4 px-4 sm:px-6 pb-4">
+                                    <h4 className="font-semibold text-sm mb-1">Precisa de ajuda?</h4>
+                                    <p className="text-xs text-muted-foreground mb-3">
+                                        Qualquer dúvida sobre o teu pedido, estamos aqui para ajudar.
+                                    </p>
+                                    <Link href="/contacto">
+                                        <Button variant="outline" size="sm" className="w-full text-xs border-primary/20 hover:bg-primary/10">
+                                            Contactar Suporte
+                                        </Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
-                </div>
-            </motion.div>
+                </motion.div>
+            </div>
         </div>
     );
 }
