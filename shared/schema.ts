@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -174,6 +174,18 @@ export const insertCouponSchema = createInsertSchema(coupons).omit({
 
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 export type Coupon = typeof coupons.$inferSelect;
+
+// ============ SITE SETTINGS ============
+export const siteSettingsTable = pgTable("site_settings", {
+  id: integer("id").primaryKey().default(1),
+  heroTitle: text("hero_title").notNull().default("Be Different, Be Classic"),
+  heroSubtitle: text("hero_subtitle").notNull().default("Streetwear moçambicano autêntico. Raízes urbanas com forte identidade local."),
+  banners: text("banners").array().notNull().default(sql`ARRAY[]::text[]`),
+  highlights: jsonb("highlights").notNull().default(sql`'[]'::jsonb`),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export type SiteSettingsRow = typeof siteSettingsTable.$inferSelect;
 
 // ============ CART TYPES (Frontend only) ============
 export const cartItemSchema = z.object({

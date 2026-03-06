@@ -1,7 +1,7 @@
 import { db } from './db';
 import {
     users, products, collections, categories,
-    orders, orderItems, coupons,
+    orders, orderItems, coupons, siteSettingsTable,
     type User, type InsertUser,
     type Product, type InsertProduct,
     type Collection, type InsertCollection,
@@ -18,8 +18,8 @@ import type { IStorage, SiteSettings } from './storage';
 
 const PgSession = connectPgSimple(session);
 
-// Settings em memória (pode migrar para tabela depois)
-let siteSettings: SiteSettings = {
+// Valores padrão das settings (usados se a tabela estiver vazia)
+const DEFAULT_SETTINGS: SiteSettings = {
     heroTitle: 'Be Different, Be Classic',
     heroSubtitle: 'Streetwear moçambicano autêntico. Raízes urbanas com forte identidade local.',
     banners: [],
@@ -290,26 +290,66 @@ export class PostgresStorage implements IStorage {
             .where(eq(coupons.id, id));
     }
 
-    // ===== SETTINGS =====
+    // ===== SETTINGS (persistidas na DB) =====
     async getSettings(): Promise<SiteSettings> {
-        return siteSettings;
+        try {
+            const rows = await db.select().from(siteSettingsTable).where(eq(siteSettingsTable.id, 1));
+            if (rows.length === 0) {
+                // Primeira vez — criar linha com valores padrão
+                await db.insert(siteSettingsTable).values({ id: 1, ...DEFAULT_SETTINGS }).onConflictDoNothing();
+                return { ...DEFAULT_SETTINGS };
+            }
+            const row = rows[0];
+            return {
+                heroTitle: row.heroTitle,
+                heroSubtitle: row.heroSubtitle,
+                banners: Array.isArray(row.banners) ? row.banners : [],
+                highlights: Array.isArray(row.highlights) ? row.highlights as any[] : [],
+            };
+        } catch (err: any) {
+            console.error('⚠️ [Settings] Erro ao ler da DB, usando padrão:', err.message);
+            return { ...DEFAULT_SETTINGS };
+        }
     }
 
     async updateSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
-        siteSettings = {
-            heroTitle: settings.heroTitle ?? siteSettings.heroTitle,
-            heroSubtitle: settings.heroSubtitle ?? siteSettings.heroSubtitle,
-            banners: Array.isArray(settings.banners)
-                ? settings.banners.filter((s) => typeof s === 'string')
-                : siteSettings.banners,
-            highlights: Array.isArray(settings.highlights)
-                ? settings.highlights.map((h) => ({
-                    title: String(h.title ?? ''),
-                    description: h.description ?? undefined,
-                    image: h.image ?? undefined,
-                }))
-                : siteSettings.highlights,
-        };
-        return siteSettings;
+        try {
+            // Ler settings actuais para fazer merge
+            const current = await this.getSettings();
+            const next: SiteSettings = {
+                heroTitle: settings.heroTitle ?? current.heroTitle,
+                heroSubtitle: settings.heroSubtitle ?? current.heroSubtitle,
+                banners: Array.isArray(settings.banners)
+                    ? settings.banners.filter((s) => typeof s === 'string')
+                    : current.banners,
+                highlights: Array.isArray(settings.highlights)
+                    ? settings.highlights.map((h) => ({
+                        title: String(h.title ?? ''),
+                        description: h.description ?? undefined,
+                        image: h.image ?? undefined,
+                    }))
+                    : current.highlights,
+            };
+
+            // Upsert — cria linha se não existir, atualiza se existir
+            await db.insert(siteSettingsTable)
+                .values({ id: 1, ...next })
+                .onConflictDoUpdate({
+                    target: siteSettingsTable.id,
+                    set: {
+                        heroTitle: next.heroTitle,
+                        heroSubtitle: next.heroSubtitle,
+                        banners: next.banners,
+                        highlights: next.highlights as any,
+                        updatedAt: new Date(),
+                    },
+                });
+
+            console.log('✅ [Settings] Guardado na DB');
+            return next;
+        } catch (err: any) {
+            console.error('❌ [Settings] Erro ao guardar na DB:', err.message);
+            throw err;
+        }
     }
 }

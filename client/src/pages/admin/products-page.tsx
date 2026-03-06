@@ -404,7 +404,8 @@ export default function ProductsPage() {
                                                     try {
                                                         const resp = await apiRequest("POST", "/api/admin/upload-base64", {
                                                             filename: file.name,
-                                                            dataUrl
+                                                            dataUrl,
+                                                            tipo: "produto",
                                                         });
                                                         // apiRequest now returns JSON directly
                                                         if (!resp?.url) throw new Error("URL não recebido do servidor");

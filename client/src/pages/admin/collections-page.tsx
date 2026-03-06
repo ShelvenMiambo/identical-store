@@ -240,7 +240,8 @@ export default function CollectionsPage() {
                                                 try {
                                                     const resp = await apiRequest("POST", "/api/admin/upload-base64", {
                                                         filename: file.name,
-                                                        dataUrl
+                                                        dataUrl,
+                                                        tipo: "colecao",
                                                     });
                                                     setCollectionForm((prev) => ({ ...prev, imagem: resp.url }));
                                                     toast({ title: "Imagem carregada" });

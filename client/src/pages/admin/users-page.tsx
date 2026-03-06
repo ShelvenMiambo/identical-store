@@ -94,6 +94,7 @@ export default function UsersPage() {
                 const resp = await apiRequest("POST", "/api/admin/upload-base64", {
                     filename: file.name,
                     dataUrl: reader.result as string,
+                    tipo: "slideshow",
                 });
                 setBanners((prev) => [...prev, resp.url]);
                 toast({ title: "Imagem adicionada! Clique em Guardar." });

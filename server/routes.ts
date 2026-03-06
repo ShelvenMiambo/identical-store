@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertProductSchema, insertCollectionSchema, insertCouponSchema } from "@shared/schema";
 import { insertCategorySchema } from "@shared/schema";
+import { deleteImages, getCloudinaryFolder } from "./media";
 import fs from "fs";
 import path from "path";
 
@@ -266,10 +267,10 @@ export function registerRoutes(app: Express): Server {
 
           // Send payment confirmation email
           try {
-            if (order.email) {
+            if (order.emailCliente) {
               const { enviarEmailPagamentoConfirmado } = await import("./email");
               await enviarEmailPagamentoConfirmado(order);
-              console.log(`📧 Email de pagamento confirmado enviado para: ${order.email}`);
+              console.log(`📧 Email de pagamento confirmado enviado para: ${order.emailCliente}`);
             }
           } catch (emailError) {
             console.error('⚠️ Erro ao enviar email de confirmação:', emailError);
@@ -306,12 +307,21 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Update order status (admin)
+  // Quando confirmado: apaga o comprovativo do Cloudinary/local (já não é necessário)
   app.put("/api/admin/orders/:id/status", requireAdmin, async (req, res, next) => {
     try {
       const { status } = req.body;
+      // Buscar pedido antes de atualizar para ter o URL do comprovativo
+      const currentOrder = await storage.getOrder(req.params.id);
       const order = await storage.updateOrderStatus(req.params.id, status);
       if (!order) {
         return res.status(404).send("Pedido não encontrado");
+      }
+      // Apagar comprovativo quando pedido é confirmado ou cancelado
+      if ((status === "confirmado" || status === "cancelado") && currentOrder?.comprovanteUrl) {
+        deleteImages([currentOrder.comprovanteUrl]).catch((e) =>
+          console.error("[⚠️] Erro ao apagar comprovativo:", e.message)
+        );
       }
       res.json(order);
     } catch (error) {
@@ -349,9 +359,22 @@ export function registerRoutes(app: Express): Server {
   // Update product (admin)
   app.put("/api/admin/products/:id", requireAdmin, async (req, res, next) => {
     try {
+      // Guardar imagens antigas antes de atualizar
+      const current = await storage.getProduct(req.params.id);
       const product = await storage.updateProduct(req.params.id, req.body);
       if (!product) {
         return res.status(404).send("Produto não encontrado");
+      }
+      // Apagar imagens que foram removidas (existiam antes mas já não existem)
+      if (current?.imagens?.length && req.body.imagens) {
+        const removidas = current.imagens.filter(
+          (url) => !req.body.imagens.includes(url)
+        );
+        if (removidas.length > 0) {
+          deleteImages(removidas).catch((e) =>
+            console.error("[⚠️] Erro ao apagar imagens removidas:", e.message)
+          );
+        }
       }
       res.json(product);
     } catch (error) {
@@ -362,9 +385,17 @@ export function registerRoutes(app: Express): Server {
   // Delete product (admin)
   app.delete("/api/admin/products/:id", requireAdmin, async (req, res, next) => {
     try {
+      // Buscar produto antes de apagar para ter as URLs das imagens
+      const product = await storage.getProduct(req.params.id);
       const deleted = await storage.deleteProduct(req.params.id);
       if (!deleted) {
         return res.status(404).send("Produto não encontrado");
+      }
+      // Apagar imagens do Cloudinary/local (best-effort)
+      if (product?.imagens?.length) {
+        deleteImages(product.imagens).catch((e) =>
+          console.error("[⚠️] Erro ao apagar imagens do produto:", e.message)
+        );
       }
       res.sendStatus(204);
     } catch (error) {
@@ -423,9 +454,17 @@ export function registerRoutes(app: Express): Server {
   // Update collection (admin)
   app.put("/api/admin/collections/:id", requireAdmin, async (req, res, next) => {
     try {
+      // Guardar imagem antiga antes de atualizar
+      const current = await storage.getCollection(req.params.id);
       const collection = await storage.updateCollection(req.params.id, req.body);
       if (!collection) {
         return res.status(404).send("Coleção não encontrada");
+      }
+      // Apagar imagem antiga se foi substituída
+      if (current?.imagem && req.body.imagem !== undefined && current.imagem !== req.body.imagem) {
+        deleteImages([current.imagem]).catch((e) =>
+          console.error("[⚠️] Erro ao apagar imagem da coleção:", e.message)
+        );
       }
       res.json(collection);
     } catch (error) {
@@ -436,9 +475,17 @@ export function registerRoutes(app: Express): Server {
   // Delete collection (admin)
   app.delete("/api/admin/collections/:id", requireAdmin, async (req, res, next) => {
     try {
+      // Guardar imagem antes de apagar
+      const current = await storage.getCollection(req.params.id);
       const deleted = await storage.deleteCollection(req.params.id);
       if (!deleted) {
         return res.status(404).send("Coleção não encontrada");
+      }
+      // Apagar imagem de capa do Cloudinary/local
+      if (current?.imagem) {
+        deleteImages([current.imagem]).catch((e) =>
+          console.error("[⚠️] Erro ao apagar imagem da coleção eliminada:", e.message)
+        );
       }
       res.sendStatus(204);
     } catch (error) {
@@ -446,25 +493,44 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Update site settings (admin)
+  // Update site settings (admin) + limpeza de slides removidos
   app.put("/api/admin/settings", requireAdmin, async (req, res, next) => {
     try {
+      // Ler settings actuais para comparar banners
+      const current = await storage.getSettings();
       const updated = await storage.updateSettings(req.body ?? {});
+
+      // Apagar slides que foram removidos do Cloudinary/local
+      if (Array.isArray(req.body?.banners) && Array.isArray(current.banners)) {
+        const slidesRemovidos = current.banners.filter(
+          (url) => !req.body.banners.includes(url)
+        );
+        if (slidesRemovidos.length > 0) {
+          deleteImages(slidesRemovidos).catch((e) =>
+            console.error("[⚠️] Erro ao apagar slides removidos:", e.message)
+          );
+        }
+      }
+
       res.json(updated);
     } catch (error) {
       next(error);
     }
   });
 
-  // Base64 image upload (admin) - Cloudinary quando configurado, local como fallback
+  // Base64 image upload (admin) — Cloudinary quando configurado, local como fallback
+  // Aceita parâmetro opcional `tipo` para organizar pastas: produto | colecao | slideshow | comprovativo
   app.post("/api/admin/upload-base64", requireAdmin, async (req, res, next) => {
     try {
-      const { filename, dataUrl } = req.body || {};
+      const { filename, dataUrl, tipo } = req.body || {};
       if (!dataUrl || typeof dataUrl !== "string") {
         return res.status(400).json({ message: "dataUrl obrigatório" });
       }
 
-      // Se Cloudinary está configurado, usar Cloudinary (aceita qualquer formato nativo)
+      // Pasta Cloudinary baseada no tipo de ficheiro
+      const folder = getCloudinaryFolder(tipo ?? "produto");
+
+      // Se Cloudinary está configurado, usar Cloudinary
       if (process.env.CLOUDINARY_CLOUD_NAME) {
         const { v2: cloudinary } = await import('cloudinary');
         cloudinary.config({
@@ -474,14 +540,14 @@ export function registerRoutes(app: Express): Server {
         });
 
         const result = await cloudinary.uploader.upload(dataUrl, {
-          folder: 'identical',
+          folder,
           resource_type: 'auto',
         });
 
         return res.status(201).json({ url: result.secure_url });
       }
 
-      // Fallback: guardar localmente - aceita qualquer tipo de imagem
+      // Fallback: guardar localmente
       const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
       if (!match) {
         return res.status(400).json({ message: "Formato de dataUrl inválido" });
@@ -490,7 +556,6 @@ export function registerRoutes(app: Express): Server {
       const base64 = match[2];
       const buffer = Buffer.from(base64, "base64");
 
-      // Derivar extensão de qualquer MIME do tipo image/*
       const mimeToExt: Record<string, string> = {
         "image/jpeg": ".jpg", "image/jpg": ".jpg",
         "image/png": ".png", "image/webp": ".webp",
@@ -506,6 +571,52 @@ export function registerRoutes(app: Express): Server {
           : "upload") +
         "_" + Date.now() + ext;
 
+      const assetsDir = path.join(process.cwd(), "attached_assets");
+      if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
+      fs.writeFileSync(path.join(assetsDir, safeName), buffer);
+      return res.status(201).json({ url: "/attached_assets/" + safeName });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Upload público de comprovativo de pagamento (não requer admin)
+  // Usado pelo checkout do cliente
+  app.post("/api/upload/comprovativo", async (req, res, next) => {
+    try {
+      const { filename, dataUrl } = req.body || {};
+      if (!dataUrl || typeof dataUrl !== "string") {
+        return res.status(400).json({ message: "dataUrl obrigatório" });
+      }
+      // Validar que é mesmo uma imagem ou PDF
+      if (!dataUrl.match(/^data:(image\/|application\/pdf)/)) {
+        return res.status(400).json({ message: "Apenas imagens ou PDF são aceites" });
+      }
+
+      const folder = getCloudinaryFolder("comprovativo");
+
+      if (process.env.CLOUDINARY_CLOUD_NAME) {
+        const { v2: cloudinary } = await import('cloudinary');
+        cloudinary.config({
+          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+          api_key: process.env.CLOUDINARY_API_KEY,
+          api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
+        const result = await cloudinary.uploader.upload(dataUrl, {
+          folder,
+          resource_type: 'auto',
+        });
+        return res.status(201).json({ url: result.secure_url });
+      }
+
+      // Fallback local
+      const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+      if (!match) return res.status(400).json({ message: "dataUrl inválido" });
+      const mime = match[1];
+      const base64 = match[2];
+      const buffer = Buffer.from(base64, "base64");
+      const ext = mime.includes("pdf") ? ".pdf" : ".jpg";
+      const safeName = "comprovativo_" + Date.now() + ext;
       const assetsDir = path.join(process.cwd(), "attached_assets");
       if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
       fs.writeFileSync(path.join(assetsDir, safeName), buffer);

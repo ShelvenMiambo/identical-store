@@ -139,7 +139,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
         reader.onerror = reject;
         reader.readAsDataURL(comprovanteFile);
       });
-      const resp = await apiRequest("POST", "/api/admin/upload-base64", {
+      const resp = await apiRequest("POST", "/api/upload/comprovativo", {
         filename: comprovanteFile.name,
         dataUrl,
       });
