@@ -204,6 +204,7 @@ export const siteSettingsTable = pgTable("site_settings", {
   heroSubtitle: text("hero_subtitle").notNull().default("Streetwear moçambicano autêntico. Raízes urbanas com forte identidade local."),
   banners: text("banners").array().notNull().default(sql`ARRAY[]::text[]`),
   highlights: jsonb("highlights").notNull().default(sql`'[]'::jsonb`),
+  paymentContacts: jsonb("payment_contacts").notNull().default(sql`'{"mpesa":"","emola":"","mbim":""}'::jsonb`),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

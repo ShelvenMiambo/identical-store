@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Order } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -225,104 +224,6 @@ export default function OrdersPage() {
                             )}
                         </CardContent>
                     </Card>
-
-                    {/* Dialog controlado fora do map() — corrige bug de estado desatualizado */}
-                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl">
-                            <DialogHeader>
-                                <DialogTitle className="text-lg">
-                                    Pedido #{selectedOrder?.id.slice(0, 8).toUpperCase()}
-                                </DialogTitle>
-                                <DialogDescription>
-                                    {selectedOrder && new Date(selectedOrder.createdAt).toLocaleString("pt-MZ")}
-                                </DialogDescription>
-                            </DialogHeader>
-
-                            {selectedOrder && (
-                                <div className="space-y-5 pt-2">
-                                    {/* ── Estado — botões clicáveis ── */}
-                                    <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-                                        <Label className="text-sm font-bold uppercase tracking-wider">
-                                            🔄 Alterar Estado do Pedido
-                                        </Label>
-                                        <p className="text-xs text-muted-foreground mt-1 mb-3">
-                                            Clica no novo estado. A alteração reflecte-se <strong>imediatamente</strong> na conta e página do cliente.
-                                        </p>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                            {[
-                                                { value: "pendente", label: "Pendente", color: "bg-yellow-400", btnClass: "border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20" },
-                                                { value: "confirmado", label: "Confirmado ✓", color: "bg-green-500", btnClass: "border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20" },
-                                                { value: "enviado", label: "Enviado 🚚", color: "bg-blue-500", btnClass: "border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20" },
-                                                { value: "entregue", label: "Entregue ✅", color: "bg-slate-500", btnClass: "border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20" },
-                                                { value: "cancelado", label: "Cancelado", color: "bg-red-500", btnClass: "border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20" },
-                                            ].map((s) => (
-                                                <button
-                                                    key={s.value}
-                                                    type="button"
-                                                    disabled={updateStatusMutation.isPending || selectedOrder.status === s.value}
-                                                    onClick={() => handleStatusChange(s.value)}
-                                                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all
-                                                        ${selectedOrder.status === s.value
-                                                            ? "ring-2 ring-primary border-primary bg-primary/10 font-bold"
-                                                            : s.btnClass}
-                                                        disabled:opacity-50 disabled:cursor-not-allowed`}
-                                                >
-                                                    <span className={`w-3 h-3 rounded-full ${s.color} inline-block shrink-0`} />
-                                                    {s.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        {updateStatusMutation.isPending && (
-                                            <p className="text-xs text-muted-foreground mt-2 animate-pulse">A guardar...</p>
-                                        )}
-                                        <div className="mt-3">
-                                            {statusBadge(selectedOrder.status)}
-                                        </div>
-                                    </div>
-
-                                    {/* ── Info cliente + entrega ── */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                        <div className="rounded-lg border p-3 space-y-1">
-                                            <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">👤 Cliente</p>
-                                            <p className="font-medium">{selectedOrder.nomeCliente}</p>
-                                            {selectedOrder.emailCliente && <p className="text-muted-foreground text-xs">{selectedOrder.emailCliente}</p>}
-                                            <p className="text-muted-foreground">{selectedOrder.telefoneCliente}</p>
-                                            {selectedOrder.metodoPagamento && (
-                                                <p className="font-semibold text-xs mt-1">💳 {payLabel(selectedOrder.metodoPagamento)}</p>
-                                            )}
-                                        </div>
-                                        <div className="rounded-lg border p-3 space-y-1">
-                                            <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">📍 Entrega</p>
-                                            <p className="font-medium">{selectedOrder.enderecoEntrega}</p>
-                                            <p className="text-muted-foreground text-sm">
-                                                {selectedOrder.cidadeEntrega ? `${selectedOrder.cidadeEntrega}, ` : ""}
-                                                {selectedOrder.provinciaEntrega}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* ── Valor ── */}
-                                    <div className="rounded-lg border p-3 text-sm">
-                                        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">💰 Valor</p>
-                                        <div className="flex justify-between text-muted-foreground">
-                                            <span>Subtotal</span>
-                                            <span>{fmt(selectedOrder.subtotal)}</span>
-                                        </div>
-                                        <div className="flex justify-between font-bold text-base border-t mt-1 pt-1">
-                                            <span>Total</span>
-                                            <span className="text-primary">{fmt(selectedOrder.total)}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* ── Comprovativo ── */}
-                                    <div className="rounded-lg border p-3">
-                                        <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-3">📎 Comprovativo de Pagamento</p>
-                                        {renderComprovativo(selectedOrder.comprovanteUrl)}
-                                    </div>
-                                </div>
-                            )}
-                        </DialogContent>
-                    </Dialog>
                 </TabsContent>
 
                 {/* ══════ ABA HISTÓRICO ══════ */}
@@ -331,6 +232,99 @@ export default function OrdersPage() {
                 </TabsContent>
 
             </Tabs>
+
+            {/* ── Dialog de detalhes — FORA das Tabs para evitar conflitos de portal Radix ── */}
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg">
+                            Pedido #{selectedOrder?.id.slice(0, 8).toUpperCase()}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {selectedOrder && new Date(selectedOrder.createdAt).toLocaleString("pt-MZ")}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedOrder && (
+                        <div className="space-y-5 pt-2">
+                            {/* ── Estado — botões directos (mais fiáveis que Select em Dialog) ── */}
+                            <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+                                <p className="text-sm font-bold uppercase tracking-wider mb-1">🔄 Alterar Estado do Pedido</p>
+                                <p className="text-xs text-muted-foreground mb-4">
+                                    Estado actual: {statusBadge(selectedOrder.status)}
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {[
+                                        { value: "pendente", label: "Pendente", color: "bg-yellow-50 border-yellow-300 hover:bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300", dot: "bg-yellow-400" },
+                                        { value: "confirmado", label: "Confirmado", color: "bg-green-50 border-green-300 hover:bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300", dot: "bg-green-500" },
+                                        { value: "enviado", label: "Enviado", color: "bg-blue-50 border-blue-300 hover:bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300", dot: "bg-blue-500" },
+                                        { value: "entregue", label: "Entregue ✅", color: "bg-slate-50 border-slate-300 hover:bg-slate-100 text-slate-800 dark:bg-slate-800/40 dark:text-slate-300", dot: "bg-slate-500" },
+                                        { value: "cancelado", label: "Cancelado", color: "bg-red-50 border-red-300 hover:bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300", dot: "bg-red-500" },
+                                    ].map((s) => (
+                                        <button
+                                            key={s.value}
+                                            type="button"
+                                            disabled={updateStatusMutation.isPending || selectedOrder.status === s.value}
+                                            onClick={() => handleStatusChange(s.value)}
+                                            className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all
+                                                ${selectedOrder.status === s.value
+                                                    ? "ring-2 ring-offset-1 ring-primary opacity-100 " + s.color
+                                                    : s.color + " opacity-70 hover:opacity-100"}
+                                                disabled:cursor-not-allowed`}
+                                        >
+                                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${s.dot}`} />
+                                            {s.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                {updateStatusMutation.isPending && (
+                                    <p className="text-xs text-muted-foreground mt-3 animate-pulse">A guardar alteração...</p>
+                                )}
+                            </div>
+
+                            {/* ── Info cliente + entrega ── */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                <div className="rounded-lg border p-3 space-y-1">
+                                    <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">👤 Cliente</p>
+                                    <p className="font-medium">{selectedOrder.nomeCliente}</p>
+                                    {selectedOrder.emailCliente && <p className="text-muted-foreground text-xs">{selectedOrder.emailCliente}</p>}
+                                    <p className="text-muted-foreground">{selectedOrder.telefoneCliente}</p>
+                                    {selectedOrder.metodoPagamento && (
+                                        <p className="font-semibold text-xs mt-1">💳 {payLabel(selectedOrder.metodoPagamento)}</p>
+                                    )}
+                                </div>
+                                <div className="rounded-lg border p-3 space-y-1">
+                                    <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">📍 Entrega</p>
+                                    <p className="font-medium">{selectedOrder.enderecoEntrega}</p>
+                                    <p className="text-muted-foreground text-sm">
+                                        {selectedOrder.cidadeEntrega ? `${selectedOrder.cidadeEntrega}, ` : ""}
+                                        {selectedOrder.provinciaEntrega}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* ── Valor ── */}
+                            <div className="rounded-lg border p-3 text-sm">
+                                <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">💰 Valor</p>
+                                <div className="flex justify-between text-muted-foreground">
+                                    <span>Subtotal</span>
+                                    <span>{fmt(selectedOrder.subtotal)}</span>
+                                </div>
+                                <div className="flex justify-between font-bold text-base border-t mt-1 pt-1">
+                                    <span>Total</span>
+                                    <span className="text-primary">{fmt(selectedOrder.total)}</span>
+                                </div>
+                            </div>
+
+                            {/* ── Comprovativo ── */}
+                            <div className="rounded-lg border p-3">
+                                <p className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-3">📎 Comprovativo de Pagamento</p>
+                                {renderComprovativo(selectedOrder.comprovanteUrl)}
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

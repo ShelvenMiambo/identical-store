@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Type, Sparkles, Save, Trash2, Plus, Info, CreditCard } from "lucide-react";
+import { Type, Sparkles, Save, Trash2, Plus, Info, Phone } from "lucide-react";
 import { Link } from "wouter";
 
 interface SiteSettings {
@@ -15,11 +15,7 @@ interface SiteSettings {
   heroSubtitle: string;
   banners: string[];
   highlights: { title: string; description?: string; image?: string }[];
-  paymentNumbers?: {
-    mpesa?: string;
-    emola?: string;
-    mbim?: string;
-  };
+  paymentContacts: { mpesa: string; emola: string; mbim: string };
 }
 
 export default function SettingsAdminPage() {
@@ -35,7 +31,7 @@ export default function SettingsAdminPage() {
     heroSubtitle: "",
     banners: [],
     highlights: [],
-    paymentNumbers: { mpesa: "", emola: "", mbim: "" },
+    paymentContacts: { mpesa: "", emola: "", mbim: "" },
   });
 
   useEffect(() => {
@@ -221,80 +217,50 @@ export default function SettingsAdminPage() {
         </CardContent>
       </Card>
 
-      {/* Números de Pagamento */}
+      {/* Contactos de Pagamento */}
       <Card>
         <CardHeader className="flex flex-row items-center gap-3">
           <div className="bg-slate-900 text-white p-2 rounded-lg">
-            <CreditCard className="h-5 w-5" />
+            <Phone className="h-5 w-5" />
           </div>
           <div>
-            <CardTitle>Números de Pagamento</CardTitle>
+            <CardTitle>Contactos de Pagamento</CardTitle>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Números exibidos no checkout para o cliente enviar o pagamento
+              Números que aparecem no checkout quando o cliente escolhe o método de pagamento
             </p>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="mpesa" className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-500 inline-block" />
-              Número M-Pesa
-            </Label>
-            <Input
-              id="mpesa"
-              placeholder="Ex: 84 123 4567"
-              value={form.paymentNumbers?.mpesa ?? ""}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  paymentNumbers: { ...form.paymentNumbers, mpesa: e.target.value },
-                })
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="emola" className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-green-500 inline-block" />
-              Número e-Mola
-            </Label>
-            <Input
-              id="emola"
-              placeholder="Ex: 86 123 4567"
-              value={form.paymentNumbers?.emola ?? ""}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  paymentNumbers: { ...form.paymentNumbers, emola: e.target.value },
-                })
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="mbim" className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-blue-600 inline-block" />
-              Conta Millennium BIM (NIB / Número)
-            </Label>
-            <Input
-              id="mbim"
-              placeholder="Ex: 0001 0000 1234 5678 101 23"
-              value={form.paymentNumbers?.mbim ?? ""}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  paymentNumbers: { ...form.paymentNumbers, mbim: e.target.value },
-                })
-              }
-            />
-          </div>
+          {[
+            { key: "mpesa" as const, label: "M-Pesa", color: "text-red-600", placeholder: "Ex: 84 123 4567" },
+            { key: "emola" as const, label: "e-Mola", color: "text-green-600", placeholder: "Ex: 86 123 4567" },
+            { key: "mbim" as const, label: "Millennium BIM", color: "text-blue-600", placeholder: "Ex: Nº conta / IBAN" },
+          ].map(({ key, label, color, placeholder }) => (
+            <div key={key} className="space-y-2">
+              <Label htmlFor={`pc-${key}`} className={`font-semibold ${color}`}>{label}</Label>
+              <Input
+                id={`pc-${key}`}
+                value={form.paymentContacts?.[key] ?? ""}
+                placeholder={placeholder}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    paymentContacts: {
+                      ...(form.paymentContacts ?? { mpesa: "", emola: "", mbim: "" }),
+                      [key]: e.target.value,
+                    },
+                  })
+                }
+              />
+            </div>
+          ))}
           <Button
             className="gap-2"
-            onClick={() =>
-              saveMutation.mutate({ paymentNumbers: form.paymentNumbers })
-            }
+            onClick={() => saveMutation.mutate({ paymentContacts: form.paymentContacts })}
             disabled={saveMutation.isPending}
           >
             <Save className="h-4 w-4" />
-            {saveMutation.isPending ? "A guardar…" : "Guardar Números"}
+            {saveMutation.isPending ? "A guardar…" : "Guardar Contactos"}
           </Button>
         </CardContent>
       </Card>

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Redirect } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { ChevronDown, CheckCircle2, Upload, FileImage, FileText, X } from "lucide-react";
+import { ChevronDown, CheckCircle2, Upload, FileImage, FileText, X, Phone } from "lucide-react";
 
 /* ─── Províncias ─── */
 const PROVINCIAS = [
@@ -102,11 +102,9 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Busca os números de pagamento configurados pelo admin
-  const { data: settings } = useQuery<any>({
-    queryKey: ["/api/settings"],
-  });
-  const pn = settings?.paymentNumbers || {};
+  // Buscar números de pagamento configurados pelo admin
+  const { data: siteSettings } = useQuery<any>({ queryKey: ["/api/settings"] });
+  const paymentContacts: Record<string, string> = siteSettings?.paymentContacts ?? {};
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -360,20 +358,21 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {PAYMENT_METHODS.map((method) => {
                           const isSelected = selectedPayment === method.id;
-                          const number = pn[method.id] || null;
+                          const contactNo = paymentContacts[method.id];
                           return (
                             <button key={method.id} type="button"
                               onClick={() => setSelectedPayment(method.id)}
-                              className={`relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all cursor-pointer
+                              className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all cursor-pointer
                                 ${isSelected ? method.activeColor : method.color + " hover:shadow-md"}`}>
                               {isSelected && <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-green-600" />}
                               {method.icon}
                               <div className="text-center">
                                 <p className="font-bold text-sm">{method.label}</p>
                                 <p className="text-xs text-muted-foreground">{method.desc}</p>
-                                {number && (
-                                  <p className="mt-1.5 text-sm font-mono font-bold tracking-wide text-primary">
-                                    {number}
+                                {contactNo && (
+                                  <p className="text-xs font-bold mt-1.5 flex items-center justify-center gap-1">
+                                    <Phone className="h-3 w-3" />
+                                    {contactNo}
                                   </p>
                                 )}
                               </div>
@@ -391,12 +390,21 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                 {/* ── PASSO 3: Upload comprovativo ── */}
                 {step === 3 && (
                   <div className="space-y-6">
-                    {/* Instrução do método escolhido */}
+                    {/* Instrução do método escolhido + número de contacto */}
                     <div className={`flex items-start gap-3 p-4 rounded-xl border-2 ${selectedMethod?.activeColor}`}>
                       <div className="shrink-0">{selectedMethod?.icon}</div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="font-bold">{selectedMethod?.label}</p>
                         <p className="text-sm text-muted-foreground mt-1">{selectedMethod?.instructions}</p>
+                        {selectedPayment && paymentContacts[selectedPayment] && (
+                          <div className="mt-3 flex items-center gap-2 bg-white/60 dark:bg-black/20 rounded-lg px-3 py-2">
+                            <Phone className="h-4 w-4 shrink-0" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Efetua o pagamento para:</p>
+                              <p className="font-bold text-base tracking-wide">{paymentContacts[selectedPayment]}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <Button type="button" variant="ghost" size="sm" className="ml-auto shrink-0" onClick={() => setStep(2)}>
                         Mudar

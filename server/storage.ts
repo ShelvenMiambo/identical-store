@@ -92,11 +92,6 @@ export interface SiteSettings {
   heroSubtitle: string;
   banners: string[];
   highlights: { title: string; description?: string; image?: string }[];
-  paymentNumbers?: {
-    mpesa?: string;
-    emola?: string;
-    mbim?: string;
-  };
 }
 
 // In-memory storage implementation
