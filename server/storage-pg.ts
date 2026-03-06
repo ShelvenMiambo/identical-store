@@ -1,7 +1,7 @@
 import { db } from './db';
 import {
     users, products, collections, categories,
-    orders, orderItems, coupons, siteSettingsTable,
+    orders, orderItems, coupons, siteSettingsTable, orderHistory,
     type User, type InsertUser,
     type Product, type InsertProduct,
     type Collection, type InsertCollection,
@@ -9,6 +9,7 @@ import {
     type Order, type InsertOrder,
     type OrderItem, type InsertOrderItem,
     type Coupon, type InsertCoupon,
+    type OrderHistoryRow,
 } from '@shared/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import session from 'express-session';
@@ -238,7 +239,35 @@ export class PostgresStorage implements IStorage {
         return result[0];
     }
 
-    // ===== ORDER ITEMS =====
+    async deleteOrder(id: string): Promise<boolean> {
+        const result = await db.delete(orders).where(eq(orders.id, id)).returning();
+        return result.length > 0;
+    }
+
+    // ===== ORDER HISTORY (registo permanente) =====
+    async saveOrderHistory(order: Order, itens: any[]): Promise<void> {
+        await db.insert(orderHistory).values({
+            orderId: order.id,
+            nomeCliente: order.nomeCliente,
+            telefoneCliente: order.telefoneCliente,
+            emailCliente: order.emailCliente ?? null,
+            enderecoEntrega: order.enderecoEntrega ?? null,
+            provinciaEntrega: order.provinciaEntrega ?? null,
+            metodoPagamento: order.metodoPagamento ?? null,
+            subtotal: order.subtotal,
+            desconto: order.desconto ?? '0',
+            total: order.total,
+            statusFinal: order.status,
+            itens: itens as any,
+            dataPedido: order.createdAt,
+        });
+        console.log(`📋 [Histórico] Pedido ${order.id.slice(0, 8)} guardado no histórico (${order.status})`);
+    }
+
+    async getOrderHistory(): Promise<OrderHistoryRow[]> {
+        return db.select().from(orderHistory).orderBy(desc(orderHistory.dataFinalizacao));
+    }
+
     async getOrderItems(orderId: string): Promise<OrderItem[]> {
         return db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
     }

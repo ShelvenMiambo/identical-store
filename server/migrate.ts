@@ -44,6 +44,29 @@ async function migrate() {
         `;
     console.log('✅ Linha padrão de site_settings garantida');
 
+    // Criar tabela order_history para histórico permanente de pedidos
+    // Pedidos entregues/cancelados ficam aqui para sempre, mesmo após apagados da tabela orders
+    await sql`
+            CREATE TABLE IF NOT EXISTS order_history (
+                id                VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
+                order_id          VARCHAR NOT NULL,
+                nome_cliente      TEXT NOT NULL,
+                telefone_cliente  TEXT NOT NULL,
+                email_cliente     TEXT,
+                endereco_entrega  TEXT,
+                provincia_entrega TEXT,
+                metodo_pagamento  TEXT,
+                subtotal          DECIMAL(10,2),
+                desconto          DECIMAL(10,2) DEFAULT 0,
+                total             DECIMAL(10,2) NOT NULL,
+                status_final      TEXT NOT NULL,
+                itens             JSONB NOT NULL DEFAULT '[]'::JSONB,
+                data_pedido       TIMESTAMP NOT NULL,
+                data_finalizacao  TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+        `;
+    console.log('✅ Tabela order_history criada (ou já existia)');
+
     console.log('🎉 Migrations concluídas com sucesso!');
   } catch (err: any) {
     console.error('❌ Erro na migration:', err.message);

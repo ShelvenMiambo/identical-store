@@ -307,23 +307,137 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Update order status (admin)
-  // Quando confirmado: apaga o comprovativo do Cloudinary/local (já não é necessário)
+  // - Guarda no histórico permanente quando finalizado (entregue | cancelado)
+  // - Agenda eliminação do pedido após 1 hora quando status = "entregue"
+  // - Apaga comprovativo do Cloudinary quando confirmado | cancelado
   app.put("/api/admin/orders/:id/status", requireAdmin, async (req, res, next) => {
     try {
       const { status } = req.body;
-      // Buscar pedido antes de atualizar para ter o URL do comprovativo
       const currentOrder = await storage.getOrder(req.params.id);
       const order = await storage.updateOrderStatus(req.params.id, status);
       if (!order) {
         return res.status(404).send("Pedido não encontrado");
       }
-      // Apagar comprovativo quando pedido é confirmado ou cancelado
+
+      // ── Guardar no histórico quando pedido for finalizado ──
+      if (status === "entregue" || status === "cancelado") {
+        try {
+          const itens = await storage.getOrderItems(order.id);
+          await storage.saveOrderHistory(order, itens);
+        } catch (histErr: any) {
+          console.error("[⚠️] Erro ao guardar histórico:", histErr.message);
+        }
+      }
+
+      // ── Auto-eliminar pedido 1 hora após ser marcado como "entregue" ──
+      if (status === "entregue") {
+        const ONE_HOUR = 60 * 60 * 1000;
+        setTimeout(async () => {
+          try {
+            await storage.deleteOrder(order.id);
+            console.log(`🗑️ [Auto] Pedido ${order.id.slice(0, 8)} eliminado após 1h (entregue)`);
+          } catch (delErr: any) {
+            console.error(`[⚠️] Erro ao auto-eliminar pedido ${order.id.slice(0, 8)}:`, delErr.message);
+          }
+        }, ONE_HOUR);
+        console.log(`⏱️ [Auto] Pedido ${order.id.slice(0, 8)} agendado para eliminação em 1h`);
+      }
+
+      // ── Apagar comprovativo quando pedido é confirmado ou cancelado ──
       if ((status === "confirmado" || status === "cancelado") && currentOrder?.comprovanteUrl) {
         deleteImages([currentOrder.comprovanteUrl]).catch((e) =>
           console.error("[⚠️] Erro ao apagar comprovativo:", e.message)
         );
       }
+
       res.json(order);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Histórico de pedidos (admin) — todos os pedidos entregues e cancelados
+  app.get("/api/admin/orders/history", requireAdmin, async (req, res, next) => {
+    try {
+      const history = await storage.getOrderHistory();
+      res.json(history);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Export PDF do histórico — devolve HTML formatado para impressão/PDF
+  app.get("/api/admin/orders/export-pdf", requireAdmin, async (req, res, next) => {
+    try {
+      const history = await storage.getOrderHistory();
+      const fmt = (v: string | null | undefined) =>
+        v ? parseFloat(v).toLocaleString("pt-MZ", { style: "currency", currency: "MZN" }) : "—";
+      const fmtDate = (d: Date | string) =>
+        new Date(d).toLocaleDateString("pt-MZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+      // Gerar linhas da tabela de itens por pedido
+      const rows = history.map((h) => {
+        const itens: any[] = Array.isArray(h.itens) ? h.itens : [];
+        return itens.map((item) => `
+          <tr>
+            <td>${fmtDate(h.dataFinalizacao)}</td>
+            <td>${h.orderId.slice(0, 8).toUpperCase()}</td>
+            <td>${h.nomeCliente}</td>
+            <td>${h.telefoneCliente}</td>
+            <td>${item.nomeProduto ?? "—"}</td>
+            <td style="text-align:center">${item.quantidade ?? 1}</td>
+            <td style="text-align:center">${item.tamanho ?? "—"}</td>
+            <td style="text-align:center; color:${h.statusFinal === 'entregue' ? '#16a34a' : '#dc2626'}; font-weight:600">
+              ${h.statusFinal === 'entregue' ? 'Entregue' : 'Cancelado'}
+            </td>
+            <td style="text-align:right">${fmt(h.total)}</td>
+          </tr>
+        `).join("");
+      }).join("");
+
+      const html = `
+        <!DOCTYPE html><html lang="pt">
+        <head>
+          <meta charset="UTF-8">
+          <title>Histórico de Pedidos — IDENTICAL</title>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; color: #1e293b; padding: 24px; }
+            h1 { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+            .subtitle { color: #64748b; font-size: 11px; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+            thead { background: #0f172a; color: white; }
+            th { padding: 8px 10px; text-align: left; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+            td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+            tr:nth-child(even) td { background: #f8fafc; }
+            .total-row td { font-weight: 700; background: #f1f5f9; border-top: 2px solid #0f172a; }
+            .footer { margin-top: 20px; color: #94a3b8; font-size: 10px; }
+            @media print {
+              body { padding: 12px; }
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>IDENTICAL</h1>
+          <p class="subtitle">Histórico de Pedidos — Gerado em ${fmtDate(new Date())}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th><th>Pedido #</th><th>Cliente</th><th>Telef.</th>
+                <th>Produto</th><th style="text-align:center">Qtd</th><th style="text-align:center">Tam.</th>
+                <th style="text-align:center">Estado</th><th style="text-align:right">Total</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="9" style="text-align:center;padding:20px;color:#94a3b8">Sem registos no histórico</td></tr>'}</tbody>
+          </table>
+          <p class="footer">Total de registos: ${history.length} pedido(s) | IDENTICAL &copy; ${new Date().getFullYear()}</p>
+          <script>window.onload = () => window.print();<\/script>
+        </body></html>
+      `;
+
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.send(html);
     } catch (error) {
       next(error);
     }

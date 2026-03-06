@@ -151,7 +151,29 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
 
-// ============ COUPONS ============
+// ============ HISTORICO DE PEDIDOS ============
+// Registo permanente de todos os pedidos finalizados (entregues ou cancelados)
+// Mantido mesmo após o pedido ser apagado da tabela orders (após 1 hora)
+export const orderHistory = pgTable("order_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull(),              // ID original do pedido
+  nomeCliente: text("nome_cliente").notNull(),
+  telefoneCliente: text("telefone_cliente").notNull(),
+  emailCliente: text("email_cliente"),
+  enderecoEntrega: text("endereco_entrega"),
+  provinciaEntrega: text("provincia_entrega"),
+  metodoPagamento: text("metodo_pagamento"),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }),
+  desconto: decimal("desconto", { precision: 10, scale: 2 }).default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  statusFinal: text("status_final").notNull(),          // entregue | cancelado
+  itens: jsonb("itens").notNull(),                      // snapshot dos itens do pedido
+  dataPedido: timestamp("data_pedido").notNull(),       // quando foi criado
+  dataFinalizacao: timestamp("data_finalizacao").defaultNow().notNull(), // quando foi finalizado
+});
+
+export type OrderHistoryRow = typeof orderHistory.$inferSelect;
+
 export const coupons = pgTable("coupons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   codigo: text("codigo").notNull().unique(),

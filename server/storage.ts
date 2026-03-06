@@ -63,6 +63,11 @@ export interface IStorage {
   getOrdersByUser(userId: string): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  deleteOrder(id: string): Promise<boolean>;
+
+  // Order History (permanent log)
+  saveOrderHistory(order: Order, itens: any[]): Promise<void>;
+  getOrderHistory(): Promise<any[]>;
 
   // Order Items
   getOrderItems(orderId: string): Promise<OrderItem[]>;
@@ -185,6 +190,7 @@ export class MemStorage implements IStorage {
         ativo: true,
         novo: true,
         destaque: true,
+        views: 0,
         collectionId: "1",
         categoryId: "c1"
       },
@@ -204,6 +210,7 @@ export class MemStorage implements IStorage {
         ativo: true,
         novo: true,
         destaque: true,
+        views: 0,
         collectionId: "1",
         categoryId: "c1"
       },
@@ -223,6 +230,7 @@ export class MemStorage implements IStorage {
         ativo: true,
         novo: true,
         destaque: true,
+        views: 0,
         collectionId: "1",
         categoryId: "c1"
       },
@@ -242,6 +250,7 @@ export class MemStorage implements IStorage {
         ativo: true,
         novo: true,
         destaque: true,
+        views: 0,
         collectionId: "2",
         categoryId: "c1"
       }
@@ -483,12 +492,14 @@ export class MemStorage implements IStorage {
       status: insertOrder.status ?? "pendente",
       desconto: insertOrder.desconto ?? "0",
       metodoPagamento: insertOrder.metodoPagamento ?? null,
+      comprovanteUrl: insertOrder.comprovanteUrl ?? null,
       paysuiteTransactionId: insertOrder.paysuiteTransactionId ?? null,
       paysuiteStatus: insertOrder.paysuiteStatus ?? null,
       cupomCodigo: insertOrder.cupomCodigo ?? null,
       id,
       createdAt: now,
       updatedAt: now,
+
     };
     this.orders.set(id, order);
     return order;
@@ -505,6 +516,19 @@ export class MemStorage implements IStorage {
     };
     this.orders.set(id, updated);
     return updated;
+  }
+
+  async deleteOrder(id: string): Promise<boolean> {
+    return this.orders.delete(id);
+  }
+
+  // Order History stubs (MemStorage não persiste — apenas PostgresStorage usa realmente)
+  async saveOrderHistory(_order: Order, _itens: any[]): Promise<void> {
+    // sem-op em memória
+  }
+
+  async getOrderHistory(): Promise<any[]> {
+    return [];
   }
 
   // Order Items
