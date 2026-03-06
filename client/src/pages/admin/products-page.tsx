@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Product, Collection, Category } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,115 +7,89 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogFooter,
-} from "@/components/ui/dialog";
+    Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetFooter,
+} from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Edit, Trash2, X, Upload } from "lucide-react";
-
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useRef } from "react";
 import { ComboboxCreatable } from "@/components/ui/combobox-creatable";
+
+/* ─── tipos locais ─── */
+type ProductForm = {
+    nome: string;
+    slug: string;
+    descricao: string;
+    preco: string;
+    collectionId: string;
+    categoryId: string;
+    tamanhos: string[];
+    cores: string[];
+    imagens: string[];
+    estoque: string;
+    destaque: boolean;
+    novo: boolean;
+    ativo: boolean;
+};
+
+const EMPTY_FORM: ProductForm = {
+    nome: "", slug: "", descricao: "", preco: "",
+    collectionId: "", categoryId: "",
+    tamanhos: [], cores: [], imagens: [],
+    estoque: "10", destaque: false, novo: false, ativo: true,
+};
 
 export default function ProductsPage() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
-
-    const { data: products = [] } = useQuery<Product[]>({
-        queryKey: ["/api/products"],
-    });
-
-    const { data: collections = [] } = useQuery<Collection[]>({
-        queryKey: ["/api/collections"],
-    });
-
-    const { data: categories = [] } = useQuery<Category[]>({
-        queryKey: ["/api/categories"],
-    });
-
-    const [productDialogOpen, setProductDialogOpen] = useState(false);
-    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-    // Product form state
-    const [productForm, setProductForm] = useState({
-        nome: "",
-        slug: "",
-        descricao: "",
-        preco: "",
-        collectionId: "",
-        categoryId: "",
-        tamanhos: [] as string[],
-        cores: [] as string[],
-        imagens: [] as string[],
-        estoque: "10",
-        destaque: false,
-        novo: false,
-        ativo: true,
-    });
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    // Product mutations
+    /* ── Queries ── */
+    const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
+    const { data: collections = [] } = useQuery<Collection[]>({ queryKey: ["/api/collections"] });
+    const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
+
+    /* ── UI state ── */
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
+
+    /* ── Mutations: produtos ── */
     const createProductMutation = useMutation({
-        mutationFn: async (data: any) => apiRequest("POST", "/api/admin/products", data),
+        mutationFn: (data: any) => apiRequest("POST", "/api/admin/products", data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/products"] });
             toast({ title: "Produto criado com sucesso!" });
-            setProductDialogOpen(false);
-            resetProductForm();
+            setSheetOpen(false);
         },
-        onError: (error: any) => {
-            toast({ title: "Erro ao criar produto", description: error.message, variant: "destructive" });
-        },
+        onError: (e: any) => toast({ title: "Erro ao criar produto", description: e.message, variant: "destructive" }),
     });
 
     const updateProductMutation = useMutation({
-        mutationFn: async ({ id, data }: { id: string; data: any }) =>
+        mutationFn: ({ id, data }: { id: string; data: any }) =>
             apiRequest("PUT", `/api/admin/products/${id}`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/products"] });
             toast({ title: "Produto atualizado com sucesso!" });
-            setProductDialogOpen(false);
-            resetProductForm();
+            setSheetOpen(false);
         },
-        onError: (error: any) => {
-            toast({ title: "Erro ao atualizar produto", description: error.message, variant: "destructive" });
-        },
+        onError: (e: any) => toast({ title: "Erro ao atualizar produto", description: e.message, variant: "destructive" }),
     });
 
     const deleteProductMutation = useMutation({
-        mutationFn: async (id: string) => apiRequest("DELETE", `/api/admin/products/${id}`),
+        mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/products/${id}`),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-            toast({ title: "Produto eliminado com sucesso!" });
+            toast({ title: "Produto eliminado!" });
         },
-        onError: (error: any) => {
-            toast({ title: "Erro ao eliminar produto", description: error.message, variant: "destructive" });
-        },
+        onError: (e: any) => toast({ title: "Erro ao eliminar produto", description: e.message, variant: "destructive" }),
     });
 
-    // Mutations for inline creation
+    /* ── Mutations: coleções e categorias inline ── */
     const createCollectionMutation = useMutation({
         mutationFn: async (nome: string) => {
             const slug = nome.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
@@ -134,27 +108,16 @@ export default function ProductsPage() {
         onError: (e: any) => toast({ title: "Erro ao criar categoria", description: e.message, variant: "destructive" }),
     });
 
-    const resetProductForm = () => {
-        setProductForm({
-            nome: "",
-            slug: "",
-            descricao: "",
-            preco: "",
-            collectionId: "",
-            tamanhos: [],
-            cores: [],
-            imagens: [],
-            estoque: "10",
-            destaque: false,
-            novo: false,
-            ativo: true,
-        });
+    /* ── Handlers ── */
+    const openNew = () => {
         setEditingProduct(null);
+        setForm(EMPTY_FORM);
+        setSheetOpen(true);
     };
 
-    const handleEditProduct = (product: Product) => {
+    const openEdit = (product: Product) => {
         setEditingProduct(product);
-        setProductForm({
+        setForm({
             nome: product.nome,
             slug: product.slug,
             descricao: product.descricao || "",
@@ -169,21 +132,45 @@ export default function ProductsPage() {
             novo: product.novo,
             ativo: product.ativo,
         });
-        setProductDialogOpen(true);
+        setSheetOpen(true);
     };
 
-    const handleSaveProduct = () => {
-        const data = {
-            ...productForm,
-            estoque: parseInt(productForm.estoque) || 10,
-        };
-
+    const handleSave = () => {
+        const data = { ...form, estoque: parseInt(form.estoque) || 10 };
         if (editingProduct) {
             updateProductMutation.mutate({ id: editingProduct.id, data });
         } else {
             createProductMutation.mutate(data);
         }
     };
+
+    const isSaving = createProductMutation.isPending || updateProductMutation.isPending;
+
+    /* ── Upload de imagem ── */
+    const handleImageUpload = async (files: FileList | null) => {
+        if (!files) return;
+        for (const file of Array.from(files)) {
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const resp = await apiRequest("POST", "/api/admin/upload-base64", {
+                        filename: file.name,
+                        dataUrl: reader.result as string,
+                        tipo: "produto",
+                    });
+                    if (!resp?.url) throw new Error("URL não recebido do servidor");
+                    setForm(prev => ({ ...prev, imagens: [...prev.imagens, resp.url] }));
+                    toast({ title: "Imagem carregada", description: file.name });
+                } catch (err: any) {
+                    toast({ title: "Falha no upload", description: `${file.name}: ${err.message}`, variant: "destructive" });
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const fmt = (v: string) =>
+        new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(parseFloat(v));
 
     return (
         <div>
@@ -198,286 +185,13 @@ export default function ProductsPage() {
 
             <Card>
                 <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <CardTitle>Produtos</CardTitle>
-                    <Dialog open={productDialogOpen} onOpenChange={setProductDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button onClick={resetProductForm} className="w-full sm:w-auto">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Adicionar Produto
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-full sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                                <DialogTitle>{editingProduct ? "Editar Produto" : "Novo Produto"}</DialogTitle>
-                                <DialogDescription>
-                                    Preencha os detalhes do produto abaixo
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="nome">Nome do Produto *</Label>
-                                        <Input
-                                            id="nome"
-                                            value={productForm.nome}
-                                            onChange={(e) => {
-                                                setProductForm({ ...productForm, nome: e.target.value });
-                                                if (!editingProduct) {
-                                                    setProductForm({
-                                                        ...productForm,
-                                                        nome: e.target.value,
-                                                        slug: e.target.value.toLowerCase().replace(/\s+/g, "-"),
-                                                    });
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="slug">Slug (URL) *</Label>
-                                        <Input
-                                            id="slug"
-                                            value={productForm.slug}
-                                            onChange={(e) => setProductForm({ ...productForm, slug: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="descricao">Descrição</Label>
-                                    <Textarea
-                                        id="descricao"
-                                        value={productForm.descricao}
-                                        onChange={(e) => setProductForm({ ...productForm, descricao: e.target.value })}
-                                        rows={3}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="preco">Preço (MZN) *</Label>
-                                        <Input
-                                            id="preco"
-                                            type="number"
-                                            value={productForm.preco}
-                                            onChange={(e) => setProductForm({ ...productForm, preco: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="estoque">Estoque</Label>
-                                        <Input
-                                            id="estoque"
-                                            type="number"
-                                            value={productForm.estoque}
-                                            onChange={(e) => setProductForm({ ...productForm, estoque: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="collectionId">Coleção</Label>
-                                    <ComboboxCreatable
-                                        options={collections.map(c => ({ id: c.id, label: c.nome }))}
-                                        value={productForm.collectionId}
-                                        onSelect={(id) => setProductForm({ ...productForm, collectionId: id })}
-                                        onCreate={async (nome) => {
-                                            const result = await createCollectionMutation.mutateAsync(nome);
-                                            return result.id;
-                                        }}
-                                        placeholder="Selecionar coleção..."
-                                        createLabel="Criar coleção"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label htmlFor="categoryId">Categoria</Label>
-                                    <ComboboxCreatable
-                                        options={categories.map(c => ({ id: c.id, label: c.nome }))}
-                                        value={productForm.categoryId}
-                                        onSelect={(id) => setProductForm({ ...productForm, categoryId: id })}
-                                        onCreate={async (nome) => {
-                                            const result = await createCategoryMutation.mutateAsync(nome);
-                                            return result.id;
-                                        }}
-                                        placeholder="Selecionar categoria..."
-                                        createLabel="Criar categoria"
-                                    />
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Tamanhos Disponíveis</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {["XS", "S", "M", "L", "XL", "XXL"].map((size) => (
-                                            <Button
-                                                key={size}
-                                                type="button"
-                                                variant={productForm.tamanhos.includes(size) ? "default" : "outline"}
-                                                size="sm"
-                                                onClick={() => {
-                                                    const tamanhos = productForm.tamanhos.includes(size)
-                                                        ? productForm.tamanhos.filter((s) => s !== size)
-                                                        : [...productForm.tamanhos, size];
-                                                    setProductForm({ ...productForm, tamanhos });
-                                                }}
-                                            >
-                                                {size}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <Label>Cores Disponíveis</Label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {["Preto", "Branco", "Cinza", "Azul", "Vermelho"].map((cor) => (
-                                            <Button
-                                                key={cor}
-                                                type="button"
-                                                variant={productForm.cores.includes(cor) ? "default" : "outline"}
-                                                size="sm"
-                                                onClick={() => {
-                                                    const cores = productForm.cores.includes(cor)
-                                                        ? productForm.cores.filter((c) => c !== cor)
-                                                        : [...productForm.cores, cor];
-                                                    setProductForm({ ...productForm, cores });
-                                                }}
-                                            >
-                                                {cor}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <Label>Imagens do Produto</Label>
-
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                        {productForm.imagens.map((url, index) => (
-                                            <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted">
-                                                <img
-                                                    src={url}
-                                                    alt={`Preview ${index}`}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const novasImagens = [...productForm.imagens];
-                                                        novasImagens.splice(index, 1);
-                                                        setProductForm({ ...productForm, imagens: novasImagens });
-                                                    }}
-                                                    className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <X className="h-3 w-3" />
-                                                </button>
-                                                {index === 0 && (
-                                                    <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[10px] py-0.5 text-center font-medium">
-                                                        Principal
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
-
-                                        <button
-                                            type="button"
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-primary/5 transition-all"
-                                        >
-                                            <Upload className="h-6 w-6 text-muted-foreground" />
-                                            <span className="text-xs text-muted-foreground font-medium">Upload</span>
-                                        </button>
-                                    </div>
-
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        className="hidden"
-                                        onChange={async (e) => {
-                                            const files = Array.from(e.target.files || []);
-                                            if (files.length === 0) return;
-
-                                            for (const file of files) {
-                                                const reader = new FileReader();
-                                                reader.onload = async () => {
-                                                    const dataUrl = reader.result as string;
-                                                    try {
-                                                        const resp = await apiRequest("POST", "/api/admin/upload-base64", {
-                                                            filename: file.name,
-                                                            dataUrl,
-                                                            tipo: "produto",
-                                                        });
-                                                        // apiRequest now returns JSON directly
-                                                        if (!resp?.url) throw new Error("URL não recebido do servidor");
-                                                        setProductForm((prev) => ({
-                                                            ...prev,
-                                                            imagens: [...prev.imagens, resp.url]
-                                                        }));
-                                                        toast({ title: "Imagem carregada", description: file.name });
-                                                    } catch (err: any) {
-                                                        toast({
-                                                            title: "Falha no upload",
-                                                            description: `Erro ao carregar ${file.name}: ${err.message}`,
-                                                            variant: "destructive"
-                                                        });
-                                                    }
-                                                };
-                                                reader.readAsDataURL(file);
-                                            }
-                                            e.target.value = "";
-                                        }}
-                                    />
-
-                                    <p className="text-[11px] text-muted-foreground">
-                                        Dica: A primeira imagem será usada como capa do produto.
-                                    </p>
-                                </div>
-
-
-                                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
-                                    <div className="flex items-center space-x-2">
-                                        <Switch
-                                            id="destaque"
-                                            checked={productForm.destaque}
-                                            onCheckedChange={(checked) =>
-                                                setProductForm({ ...productForm, destaque: checked })
-                                            }
-                                        />
-                                        <Label htmlFor="destaque" className="text-sm">Produto em Destaque</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Switch
-                                            id="novo"
-                                            checked={productForm.novo}
-                                            onCheckedChange={(checked) =>
-                                                setProductForm({ ...productForm, novo: checked })
-                                            }
-                                        />
-                                        <Label htmlFor="novo" className="text-sm">Produto Novo</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <Switch
-                                            id="ativo"
-                                            checked={productForm.ativo}
-                                            onCheckedChange={(checked) =>
-                                                setProductForm({ ...productForm, ativo: checked })
-                                            }
-                                        />
-                                        <Label htmlFor="ativo" className="text-sm">Produto Ativo</Label>
-                                    </div>
-                                </div>
-                            </div>
-                            <DialogFooter className="flex-col sm:flex-row gap-2">
-                                <Button variant="outline" onClick={() => setProductDialogOpen(false)} className="w-full sm:w-auto">
-                                    Cancelar
-                                </Button>
-                                <Button onClick={handleSaveProduct} className="w-full sm:w-auto">
-                                    {editingProduct ? "Atualizar" : "Criar"} Produto
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                    <CardTitle>Produtos ({products.length})</CardTitle>
+                    <Button onClick={openNew} className="w-full sm:w-auto">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Adicionar Produto
+                    </Button>
                 </CardHeader>
+
                 <CardContent>
                     {products.length === 0 ? (
                         <p className="text-center text-muted-foreground py-8">
@@ -506,18 +220,21 @@ export default function ProductsPage() {
                                                     className="w-12 h-12 object-cover rounded"
                                                 />
                                             </TableCell>
-                                            <TableCell className="font-semibold max-w-[150px] truncate">{product.nome}</TableCell>
+                                            <TableCell className="font-semibold max-w-[150px] truncate">
+                                                {product.nome}
+                                            </TableCell>
                                             <TableCell className="whitespace-nowrap">
-                                                {new Intl.NumberFormat("pt-MZ", {
-                                                    style: "currency",
-                                                    currency: "MZN",
-                                                }).format(parseFloat(product.preco))}
+                                                {fmt(product.preco)}
                                             </TableCell>
                                             <TableCell className="hidden md:table-cell">{product.estoque || 0}</TableCell>
                                             <TableCell className="hidden sm:table-cell">
-                                                <Badge variant={product.ativo ? "default" : "secondary"} className="text-xs">
-                                                    {product.ativo ? "Ativo" : "Inativo"}
-                                                </Badge>
+                                                <div className="flex flex-wrap gap-1">
+                                                    <Badge variant={product.ativo ? "default" : "secondary"} className="text-xs">
+                                                        {product.ativo ? "Ativo" : "Inativo"}
+                                                    </Badge>
+                                                    {product.destaque && <Badge variant="outline" className="text-xs border-amber-400 text-amber-600">⭐ Destaque</Badge>}
+                                                    {product.novo && <Badge variant="outline" className="text-xs border-blue-400 text-blue-600">🆕 Novo</Badge>}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex gap-1 justify-end">
@@ -525,7 +242,7 @@ export default function ProductsPage() {
                                                         variant="outline"
                                                         size="icon"
                                                         className="h-8 w-8"
-                                                        onClick={() => handleEditProduct(product)}
+                                                        onClick={() => openEdit(product)}
                                                     >
                                                         <Edit className="h-3 w-3" />
                                                     </Button>
@@ -551,6 +268,243 @@ export default function ProductsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            {/* ══ Sheet lateral ══
+                Usado em vez de Dialog para evitar conflitos de portal com
+                Popover (ComboboxCreatable) aninhado — resolve o bug de
+                coleções/categorias não aparecerem e switches com erro.
+            */}
+            <Sheet open={sheetOpen} onOpenChange={(v) => { setSheetOpen(v); if (!v) setEditingProduct(null); }}>
+                <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+                    <SheetHeader className="mb-5">
+                        <SheetTitle>{editingProduct ? "Editar Produto" : "Novo Produto"}</SheetTitle>
+                        <SheetDescription>Preencha os detalhes do produto abaixo</SheetDescription>
+                    </SheetHeader>
+
+                    <div className="space-y-4">
+                        {/* Nome + Slug */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="pf-nome">Nome do Produto *</Label>
+                                <Input
+                                    id="pf-nome"
+                                    value={form.nome}
+                                    onChange={(e) => {
+                                        const nome = e.target.value;
+                                        setForm(prev => ({
+                                            ...prev,
+                                            nome,
+                                            slug: editingProduct
+                                                ? prev.slug
+                                                : nome.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""),
+                                        }));
+                                    }}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="pf-slug">Slug (URL) *</Label>
+                                <Input
+                                    id="pf-slug"
+                                    value={form.slug}
+                                    onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Descrição */}
+                        <div className="space-y-2">
+                            <Label htmlFor="pf-desc">Descrição</Label>
+                            <Textarea
+                                id="pf-desc"
+                                value={form.descricao}
+                                onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                                rows={3}
+                            />
+                        </div>
+
+                        {/* Preço + Estoque */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="pf-preco">Preço (MZN) *</Label>
+                                <Input
+                                    id="pf-preco"
+                                    type="number"
+                                    value={form.preco}
+                                    onChange={(e) => setForm({ ...form, preco: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="pf-estoque">Estoque</Label>
+                                <Input
+                                    id="pf-estoque"
+                                    type="number"
+                                    value={form.estoque}
+                                    onChange={(e) => setForm({ ...form, estoque: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Coleção */}
+                        <div className="space-y-2">
+                            <Label>Coleção</Label>
+                            <ComboboxCreatable
+                                options={collections.map(c => ({ id: c.id, label: c.nome }))}
+                                value={form.collectionId}
+                                onSelect={(id) => setForm({ ...form, collectionId: id })}
+                                onCreate={async (nome) => {
+                                    const result = await createCollectionMutation.mutateAsync(nome);
+                                    return result.id;
+                                }}
+                                placeholder="Selecionar coleção..."
+                                createLabel="Criar coleção"
+                            />
+                        </div>
+
+                        {/* Categoria */}
+                        <div className="space-y-2">
+                            <Label>Categoria</Label>
+                            <ComboboxCreatable
+                                options={categories.map(c => ({ id: c.id, label: c.nome }))}
+                                value={form.categoryId}
+                                onSelect={(id) => setForm({ ...form, categoryId: id })}
+                                onCreate={async (nome) => {
+                                    const result = await createCategoryMutation.mutateAsync(nome);
+                                    return result.id;
+                                }}
+                                placeholder="Selecionar categoria..."
+                                createLabel="Criar categoria"
+                            />
+                        </div>
+
+                        {/* Tamanhos */}
+                        <div className="space-y-2">
+                            <Label>Tamanhos Disponíveis</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {["XS", "S", "M", "L", "XL", "XXL"].map((size) => (
+                                    <Button
+                                        key={size}
+                                        type="button"
+                                        variant={form.tamanhos.includes(size) ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => {
+                                            const tamanhos = form.tamanhos.includes(size)
+                                                ? form.tamanhos.filter(s => s !== size)
+                                                : [...form.tamanhos, size];
+                                            setForm({ ...form, tamanhos });
+                                        }}
+                                    >
+                                        {size}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Cores */}
+                        <div className="space-y-2">
+                            <Label>Cores Disponíveis</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {["Preto", "Branco", "Cinza", "Azul", "Vermelho"].map((cor) => (
+                                    <Button
+                                        key={cor}
+                                        type="button"
+                                        variant={form.cores.includes(cor) ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => {
+                                            const cores = form.cores.includes(cor)
+                                                ? form.cores.filter(c => c !== cor)
+                                                : [...form.cores, cor];
+                                            setForm({ ...form, cores });
+                                        }}
+                                    >
+                                        {cor}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Imagens */}
+                        <div className="space-y-3">
+                            <Label>Imagens do Produto</Label>
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                {form.imagens.map((url, index) => (
+                                    <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted">
+                                        <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const imgs = [...form.imagens];
+                                                imgs.splice(index, 1);
+                                                setForm({ ...form, imagens: imgs });
+                                            }}
+                                            className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </button>
+                                        {index === 0 && (
+                                            <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[10px] py-0.5 text-center font-medium">
+                                                Principal
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-1 hover:border-primary/50 hover:bg-primary/5 transition-all"
+                                >
+                                    <Upload className="h-5 w-5 text-muted-foreground" />
+                                    <span className="text-xs text-muted-foreground">Upload</span>
+                                </button>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={(e) => { handleImageUpload(e.target.files); e.target.value = ""; }}
+                            />
+                            <p className="text-[11px] text-muted-foreground">A primeira imagem será usada como capa do produto.</p>
+                        </div>
+
+                        {/* Toggles: Destaque / Novo / Ativo */}
+                        <div className="flex flex-col gap-3 pt-3 border-t">
+                            {[
+                                { id: "pf-destaque", label: "⭐ Produto em Destaque", field: "destaque" as const },
+                                { id: "pf-novo", label: "🆕 Produto Novo", field: "novo" as const },
+                                { id: "pf-ativo", label: "✅ Produto Ativo", field: "ativo" as const },
+                            ].map(({ id, label, field }) => (
+                                <div key={id} className="flex items-center justify-between rounded-lg border p-3">
+                                    <Label htmlFor={id} className="text-sm cursor-pointer">{label}</Label>
+                                    <Switch
+                                        id={id}
+                                        checked={form[field] as boolean}
+                                        onCheckedChange={(checked) => setForm({ ...form, [field]: checked })}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <SheetFooter className="flex-col sm:flex-row gap-2 mt-6">
+                        <Button
+                            variant="outline"
+                            onClick={() => setSheetOpen(false)}
+                            className="w-full sm:w-auto"
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleSave}
+                            disabled={isSaving || !form.nome || !form.preco}
+                            className="w-full sm:w-auto"
+                        >
+                            {isSaving ? "A guardar..." : editingProduct ? "Atualizar Produto" : "Criar Produto"}
+                        </Button>
+                    </SheetFooter>
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }
