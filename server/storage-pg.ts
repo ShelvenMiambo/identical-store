@@ -329,11 +329,20 @@ export class PostgresStorage implements IStorage {
                 return { ...DEFAULT_SETTINGS };
             }
             const row = rows[0];
+            const highlightsRaw = Array.isArray(row.highlights) ? row.highlights as any[] : [];
+            // paymentNumbers é guardado como último elemento do highlights com _type: 'paymentNumbers'
+            const paymentEntry = highlightsRaw.find((h: any) => h?._type === 'paymentNumbers');
+            const highlights = highlightsRaw.filter((h: any) => !h?._type);
             return {
                 heroTitle: row.heroTitle,
                 heroSubtitle: row.heroSubtitle,
                 banners: Array.isArray(row.banners) ? row.banners : [],
-                highlights: Array.isArray(row.highlights) ? row.highlights as any[] : [],
+                highlights,
+                paymentNumbers: paymentEntry ? {
+                    mpesa: paymentEntry.mpesa ?? undefined,
+                    emola: paymentEntry.emola ?? undefined,
+                    mbim: paymentEntry.mbim ?? undefined,
+                } : undefined,
             };
         } catch (err: any) {
             console.error('⚠️ [Settings] Erro ao ler da DB, usando padrão:', err.message);
@@ -352,24 +361,33 @@ export class PostgresStorage implements IStorage {
                     ? settings.banners.filter((s) => typeof s === 'string')
                     : current.banners,
                 highlights: Array.isArray(settings.highlights)
-                    ? settings.highlights.map((h) => ({
+                    ? settings.highlights.filter((h: any) => !h?._type).map((h) => ({
                         title: String(h.title ?? ''),
                         description: h.description ?? undefined,
                         image: h.image ?? undefined,
                     }))
                     : current.highlights,
+                paymentNumbers: settings.paymentNumbers ?? current.paymentNumbers,
             };
+
+            // Combinar highlights + paymentNumbers num só array JSONB para a DB
+            const highlightsForDb = [
+                ...(next.highlights || []),
+                ...(next.paymentNumbers
+                    ? [{ _type: 'paymentNumbers', ...next.paymentNumbers }]
+                    : []),
+            ];
 
             // Upsert — cria linha se não existir, atualiza se existir
             await db.insert(siteSettingsTable)
-                .values({ id: 1, ...next })
+                .values({ id: 1, ...next, highlights: highlightsForDb as any })
                 .onConflictDoUpdate({
                     target: siteSettingsTable.id,
                     set: {
                         heroTitle: next.heroTitle,
                         heroSubtitle: next.heroSubtitle,
                         banners: next.banners,
-                        highlights: next.highlights as any,
+                        highlights: highlightsForDb as any,
                         updatedAt: new Date(),
                     },
                 });

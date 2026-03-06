@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,12 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
   const [comprovantePreview, setComprovantePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Busca os números de pagamento configurados pelo admin
+  const { data: settings } = useQuery<any>({
+    queryKey: ["/api/settings"],
+  });
+  const pn = settings?.paymentNumbers || {};
 
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
@@ -353,6 +360,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {PAYMENT_METHODS.map((method) => {
                           const isSelected = selectedPayment === method.id;
+                          const number = pn[method.id] || null;
                           return (
                             <button key={method.id} type="button"
                               onClick={() => setSelectedPayment(method.id)}
@@ -363,6 +371,11 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                               <div className="text-center">
                                 <p className="font-bold text-sm">{method.label}</p>
                                 <p className="text-xs text-muted-foreground">{method.desc}</p>
+                                {number && (
+                                  <p className="mt-1.5 text-sm font-mono font-bold tracking-wide text-primary">
+                                    {number}
+                                  </p>
+                                )}
                               </div>
                             </button>
                           );

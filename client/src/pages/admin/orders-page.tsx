@@ -11,9 +11,6 @@ import {
 import {
     Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { FileText, ExternalLink, ChevronRight, Download, History } from "lucide-react";
@@ -243,55 +240,38 @@ export default function OrdersPage() {
 
                             {selectedOrder && (
                                 <div className="space-y-5 pt-2">
-                                    {/* ── Estado — secção principal ── */}
+                                    {/* ── Estado — botões clicáveis ── */}
                                     <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
                                         <Label className="text-sm font-bold uppercase tracking-wider">
                                             🔄 Alterar Estado do Pedido
                                         </Label>
                                         <p className="text-xs text-muted-foreground mt-1 mb-3">
-                                            A alteração reflecte-se <strong>imediatamente</strong> na conta e página do cliente.
+                                            Clica no novo estado. A alteração reflecte-se <strong>imediatamente</strong> na conta e página do cliente.
                                         </p>
-                                        <Select
-                                            value={selectedOrder.status}
-                                            onValueChange={handleStatusChange}
-                                            disabled={updateStatusMutation.isPending}
-                                        >
-                                            <SelectTrigger className="w-full h-12 text-base font-medium">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="pendente" className="py-3">
-                                                    <span className="flex items-center gap-2">
-                                                        <span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" />
-                                                        Pendente — aguarda verificação do pagamento
-                                                    </span>
-                                                </SelectItem>
-                                                <SelectItem value="confirmado" className="py-3">
-                                                    <span className="flex items-center gap-2">
-                                                        <span className="w-3 h-3 rounded-full bg-green-500 inline-block" />
-                                                        Confirmado — pagamento verificado ✓
-                                                    </span>
-                                                </SelectItem>
-                                                <SelectItem value="enviado" className="py-3">
-                                                    <span className="flex items-center gap-2">
-                                                        <span className="w-3 h-3 rounded-full bg-blue-500 inline-block" />
-                                                        Enviado — a caminho do cliente
-                                                    </span>
-                                                </SelectItem>
-                                                <SelectItem value="entregue" className="py-3">
-                                                    <span className="flex items-center gap-2">
-                                                        <span className="w-3 h-3 rounded-full bg-slate-500 inline-block" />
-                                                        Entregue — pedido concluído
-                                                    </span>
-                                                </SelectItem>
-                                                <SelectItem value="cancelado" className="py-3">
-                                                    <span className="flex items-center gap-2">
-                                                        <span className="w-3 h-3 rounded-full bg-red-500 inline-block" />
-                                                        Cancelado
-                                                    </span>
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                            {[
+                                                { value: "pendente", label: "Pendente", color: "bg-yellow-400", btnClass: "border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20" },
+                                                { value: "confirmado", label: "Confirmado ✓", color: "bg-green-500", btnClass: "border-green-300 hover:bg-green-50 dark:hover:bg-green-900/20" },
+                                                { value: "enviado", label: "Enviado 🚚", color: "bg-blue-500", btnClass: "border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20" },
+                                                { value: "entregue", label: "Entregue ✅", color: "bg-slate-500", btnClass: "border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20" },
+                                                { value: "cancelado", label: "Cancelado", color: "bg-red-500", btnClass: "border-red-300 hover:bg-red-50 dark:hover:bg-red-900/20" },
+                                            ].map((s) => (
+                                                <button
+                                                    key={s.value}
+                                                    type="button"
+                                                    disabled={updateStatusMutation.isPending || selectedOrder.status === s.value}
+                                                    onClick={() => handleStatusChange(s.value)}
+                                                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition-all
+                                                        ${selectedOrder.status === s.value
+                                                            ? "ring-2 ring-primary border-primary bg-primary/10 font-bold"
+                                                            : s.btnClass}
+                                                        disabled:opacity-50 disabled:cursor-not-allowed`}
+                                                >
+                                                    <span className={`w-3 h-3 rounded-full ${s.color} inline-block shrink-0`} />
+                                                    {s.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                         {updateStatusMutation.isPending && (
                                             <p className="text-xs text-muted-foreground mt-2 animate-pulse">A guardar...</p>
                                         )}
@@ -440,8 +420,8 @@ function HistoricoTab() {
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold border uppercase ${h.statusFinal === "entregue"
-                                                ? "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300"
-                                                : "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300"
+                                            ? "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-300"
+                                            : "bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-300"
                                             }`}>
                                             {h.statusFinal}
                                         </span>
