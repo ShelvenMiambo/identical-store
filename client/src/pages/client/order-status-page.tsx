@@ -40,7 +40,7 @@ export default function OrderStatusPage() {
         parseFloat(String(v)).toLocaleString("pt-MZ", { style: "currency", currency: "MZN" });
 
     const payLabel = (m?: string | null) =>
-        ({ mpesa: "M-Pesa", emola: "e-Mola", mbim: "Millennium BIM" }[m ?? ""] ?? m ?? "");
+        ({ mpesa: "M-Pesa", emola: "e-Mola", mbim: "Conta Bancária (Millennium BIM)" }[m ?? ""] ?? m ?? "");
 
     const getStatusConfig = (status: string) => {
         switch (status) {

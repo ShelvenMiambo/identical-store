@@ -339,7 +339,7 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                 <span className="text-primary font-bold">✓</span> Entrega rápida em Moçambique
               </li>
               <li className="flex items-center gap-3">
-                <span className="text-primary font-bold">✓</span> Pagamento seguro com M-Pesa
+                <span className="text-primary font-bold">✓</span> Pagamentos: M-Pesa, e-Mola e Conta Bancária
               </li>
             </ul>
           </div>

@@ -69,7 +69,7 @@ export default function OrdersPage() {
     };
 
     const payLabel = (m?: string | null) =>
-        ({ mpesa: "M-Pesa", emola: "e-Mola", mbim: "Millennium BIM" }[m ?? ""] ?? m ?? "—");
+        ({ mpesa: "M-Pesa", emola: "e-Mola", mbim: "Conta Bancária (Millennium BIM)" }[m ?? ""] ?? m ?? "—");
 
     const fmt = (v: string) =>
         new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(parseFloat(v));
@@ -189,7 +189,11 @@ export default function OrdersPage() {
                                             </TableHeader>
                                             <TableBody>
                                                 {orders.map((order: any) => (
-                                                    <TableRow key={order.id} className="cursor-pointer hover:bg-muted/50">
+                                                    <TableRow
+                                                        key={order.id}
+                                                        className="cursor-pointer hover:bg-muted/50"
+                                                        onClick={() => openOrder(order)}
+                                                    >
                                                         <TableCell className="font-mono text-xs"># {order.id.slice(0, 8)}</TableCell>
                                                         <TableCell>
                                                             <p className="font-medium text-sm">{order.nomeCliente}</p>

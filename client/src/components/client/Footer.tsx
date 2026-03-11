@@ -149,7 +149,7 @@ export function Footer() {
                 <span className="text-muted-foreground/50">·</span>
                 <span className="font-medium">e-Mola</span>
                 <span className="text-muted-foreground/50">·</span>
-                <span className="font-medium">Cartão</span>
+                <span className="font-medium">Conta Bancária</span>
               </div>
             </div>
           </div>

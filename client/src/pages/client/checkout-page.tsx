@@ -19,7 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Redirect } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import { ChevronDown, CheckCircle2, Upload, FileImage, FileText, X, Phone } from "lucide-react";
+import { ChevronDown, CheckCircle2, Upload, FileImage, FileText, X, Phone, Copy, Check } from "lucide-react";
 
 /* ─── Províncias ─── */
 const PROVINCIAS = [
@@ -36,7 +36,7 @@ const PAYMENT_METHODS = [
     desc: "Vodacom M-Pesa",
     color: "border-red-300 bg-red-50 dark:bg-red-950/20",
     activeColor: "border-red-600 bg-red-100 dark:bg-red-900/40 ring-2 ring-red-400",
-    instructions: "Envie o pagamento para o número M-Pesa da IDENTICAL e anexe o comprovativo.",
+    instructions: "Transfira o valor total para o número M-Pesa indicado abaixo e anexe o comprovativo de pagamento para validação da encomenda.",
     icon: (
       <svg viewBox="0 0 80 36" className="h-8 w-auto" fill="none">
         <rect width="80" height="36" rx="6" fill="#E31837" />
@@ -50,7 +50,7 @@ const PAYMENT_METHODS = [
     desc: "Movitel e-Mola",
     color: "border-green-300 bg-green-50 dark:bg-green-950/20",
     activeColor: "border-green-600 bg-green-100 dark:bg-green-900/40 ring-2 ring-green-400",
-    instructions: "Envie o pagamento para o número e-Mola da IDENTICAL e anexe o comprovativo.",
+    instructions: "Transfira o valor total para o número e-Mola indicado abaixo e anexe o comprovativo de pagamento para validação da encomenda.",
     icon: (
       <svg viewBox="0 0 80 36" className="h-8 w-auto" fill="none">
         <rect width="80" height="36" rx="6" fill="#00A651" />
@@ -60,11 +60,11 @@ const PAYMENT_METHODS = [
   },
   {
     id: "mbim",
-    label: "Millennium BIM",
-    desc: "Cartão / Conta BIM",
+    label: "Conta Bancária",
+    desc: "Transferência — Millennium BIM",
     color: "border-blue-300 bg-blue-50 dark:bg-blue-950/20",
     activeColor: "border-blue-600 bg-blue-100 dark:bg-blue-900/40 ring-2 ring-blue-400",
-    instructions: "Faça a transferência para a conta Millennium BIM da IDENTICAL e anexe o comprovativo.",
+    instructions: "Realize uma transferência bancária para a conta Millennium BIM indicada abaixo e anexe o comprovativo de pagamento para validação da encomenda.",
     icon: (
       <svg viewBox="0 0 80 36" className="h-8 w-auto" fill="none">
         <rect width="80" height="36" rx="6" fill="#003087" />
@@ -101,6 +101,14 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
   const [comprovantePreview, setComprovantePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyNumber = (number: string) => {
+    navigator.clipboard.writeText(number).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  };
 
   // Buscar números de pagamento configurados pelo admin
   const { data: siteSettings } = useQuery<any>({ queryKey: ["/api/settings"] });
@@ -199,9 +207,21 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
         window.location.href = result.order_url || `/pedido/${result.order?.id}`;
       }, 1500);
     } catch (error: any) {
+      const msg = error?.message || "";
+      let friendlyMsg = "Ocorreu um erro ao processar o pedido. Por favor, tente novamente.";
+      if (msg.includes("network") || msg.includes("fetch"))
+        friendlyMsg = "Sem ligação à internet. Verifica a tua conexão e tenta novamente.";
+      else if (msg.includes("timeout"))
+        friendlyMsg = "O servidor demorou demasiado a responder. Tenta novamente em instantes.";
+      else if (msg.includes("400") || msg.includes("invalid"))
+        friendlyMsg = "Dados inválidos. Verifica os campos preenchidos e tenta novamente.";
+      else if (msg.includes("401") || msg.includes("unauthorized"))
+        friendlyMsg = "A tua sessão expirou. Por favor, faz login novamente.";
+      else if (msg.includes("500"))
+        friendlyMsg = "Erro interno do servidor. A equipa já foi notificada. Tenta novamente mais tarde.";
       toast({
-        title: "Erro ao processar pedido",
-        description: error.message || "Tente novamente.",
+        title: "❌ Não foi possível processar o pedido",
+        description: friendlyMsg,
         variant: "destructive",
       });
       setIsProcessing(false);
@@ -390,31 +410,46 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                 {/* ── PASSO 3: Upload comprovativo ── */}
                 {step === 3 && (
                   <div className="space-y-6">
-                    {/* Instrução do método escolhido + número de contacto */}
+                    {/* Instrução do método escolhido + número de contacto + botão copiar */}
                     <div className={`flex items-start gap-3 p-4 rounded-xl border-2 ${selectedMethod?.activeColor}`}>
                       <div className="shrink-0">{selectedMethod?.icon}</div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold">{selectedMethod?.label}</p>
                         <p className="text-sm text-muted-foreground mt-1">{selectedMethod?.instructions}</p>
-                        {selectedPayment && paymentContacts[selectedPayment] && (
-                          <div className="mt-3 flex items-center gap-2 bg-white/60 dark:bg-black/20 rounded-lg px-3 py-2">
-                            <Phone className="h-4 w-4 shrink-0" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Efetua o pagamento para:</p>
-                              <p className="font-bold text-base tracking-wide">{paymentContacts[selectedPayment]}</p>
+                        {selectedPayment && paymentContacts[selectedPayment] ? (
+                          <div className="mt-3 flex items-center justify-between gap-2 bg-white/70 dark:bg-black/30 rounded-lg px-3 py-2.5 border">
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Efectue o pagamento para:</p>
+                                <p className="font-bold text-base tracking-widest">{paymentContacts[selectedPayment]}</p>
+                              </div>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyNumber(paymentContacts[selectedPayment])}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-all shrink-0"
+                            >
+                              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                              {copied ? "Copiado!" : "Copiar"}
+                            </button>
                           </div>
+                        ) : (
+                          <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-md px-3 py-2 mt-2 border border-amber-200 dark:border-amber-800">
+                            ⚠️ O número de contacto para este método ainda não foi configurado pelo administrador.
+                          </p>
                         )}
                       </div>
-                      <Button type="button" variant="ghost" size="sm" className="ml-auto shrink-0" onClick={() => setStep(2)}>
-                        Mudar
-                      </Button>
+                      <button type="button" className="ml-auto shrink-0 text-xs text-muted-foreground hover:text-foreground underline" onClick={() => setStep(2)}>
+                        Alterar
+                      </button>
                     </div>
 
                     <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-sm">
                       <p className="font-semibold mb-1">📋 Instruções de Pagamento</p>
-                      <p>Após efectuar o pagamento, anexa abaixo a <strong>screenshot</strong> ou <strong>PDF</strong> de confirmação.
-                        A equipa IDENTICAL irá verificar e confirmar o teu pedido em breve.</p>
+                      <p>Após efectuar a transferência, anexe abaixo o <strong>comprovativo</strong> (screenshot ou PDF).
+                        A nossa equipa irá verificar o pagamento e confirmar a encomenda em breve.
+                        Caso não consiga anexar o comprovativo agora, pode enviá-lo posteriormente pelo WhatsApp.</p>
                     </div>
 
                     {/* Upload area */}
