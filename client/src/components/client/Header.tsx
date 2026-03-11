@@ -42,7 +42,7 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
           <Link href="/">
             <a className="flex items-center hover-elevate active-elevate-2 rounded-md px-2 py-1" data-testid="link-home">
               <span className="font-bold text-xl md:text-3xl tracking-tight">
-                ID<span className="text-primary">≠</span>ntical
+                ID<span style={{fontSize: '1.2em', lineHeight: 1}}>≠</span>NTICAL
               </span>
             </a>
           </Link>

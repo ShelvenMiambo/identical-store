@@ -38,7 +38,7 @@ export function Footer() {
           {/* Brand Column */}
           <div className="space-y-4">
             <h3 className="font-bold text-xl tracking-tight">
-              ID<span className="text-primary">≠</span>ntical
+              ID<span style={{fontSize: '1.2em', lineHeight: 1}}>≠</span>NTICAL
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Streetwear moçambicano autêntico. Valorizamos a cultura urbana, autenticidade e a influência da arte e música das ruas.
@@ -169,7 +169,7 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} ID≠ntical. Todos os direitos reservados.
+              &copy; {new Date().getFullYear()} ID<span style={{fontSize: '1.05em', lineHeight: 1}}>≠</span>NTICAL. Todos os direitos reservados.
             </p>
             <div className="flex items-center gap-4">
               <span className="text-xs text-muted-foreground uppercase tracking-wider">Pagamentos aceites:</span>

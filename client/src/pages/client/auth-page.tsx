@@ -82,7 +82,7 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
         {/* Brand mark – visível em mobile no topo */}
         <div className="text-center mb-6">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-1">
-            ID<span className="text-primary">≠</span>ntical
+            ID<span style={{fontSize: '1.2em', lineHeight: 1}}>≠</span>NTICAL
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Be Different, Be Classic</p>
         </div>
