@@ -81,8 +81,9 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
 
         {/* Brand mark – visível em mobile no topo */}
         <div className="text-center mb-6">
-          <span className="text-4xl font-bold">≠</span>
-          <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mt-1">IDENTICAL</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-1">
+            ID<span className="text-primary">≠</span>ntical
+          </h1>
           <p className="text-muted-foreground text-sm mt-1">Be Different, Be Classic</p>
         </div>
 

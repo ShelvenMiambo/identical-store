@@ -60,7 +60,9 @@ export function AdminLayout({ children, user, onLogout }: AdminLayoutProps) {
                 <LayoutDashboard className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
               <div>
-                <p className="text-base sm:text-lg font-bold leading-none">IDENTICAL</p>
+                <p className="text-base sm:text-lg font-bold leading-none">
+                  ID<span className="text-orange-400">≠</span>ntical
+                </p>
                 <p className="text-[10px] sm:text-xs text-slate-400 leading-none mt-0.5">Admin</p>
               </div>
             </div>
@@ -101,7 +103,9 @@ export function AdminLayout({ children, user, onLogout }: AdminLayoutProps) {
                       <div className="bg-white/10 p-1.5 rounded-lg">
                         <LayoutDashboard className="h-4 w-4 text-white" />
                       </div>
-                      <p className="text-white font-bold text-sm">IDENTICAL Admin</p>
+                      <p className="text-white font-bold text-sm">
+                        ID<span className="text-orange-400">≠</span>ntical Admin
+                      </p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}
                       className="text-slate-400 hover:text-white hover:bg-white/10 h-7 w-7">
@@ -174,7 +178,7 @@ export function AdminLayout({ children, user, onLogout }: AdminLayoutProps) {
 
       <footer className="bg-white dark:bg-slate-800 border-t mt-12 py-4">
         <p className="text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} IDENTICAL — Painel Administrativo
+          © {new Date().getFullYear()} ID≠ntical — Painel Administrativo
         </p>
       </footer>
     </div>
