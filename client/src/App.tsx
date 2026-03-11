@@ -26,6 +26,7 @@ import ContactPage from "@/pages/client/contact-page";
 import PrivacyPage from "@/pages/client/privacy-page";
 import TermsPage from "@/pages/client/terms-page";
 import OrderStatusPage from "@/pages/client/order-status-page";
+import SizeGuidePage from "@/pages/client/size-guide-page";
 
 
 // Pages - Admin
@@ -87,6 +88,7 @@ function ClientRouter({
       <Route path="/privacidade" component={PrivacyPage} />
       <Route path="/termos" component={TermsPage} />
       <Route path="/pedido/:id" component={OrderStatusPage} />
+      <Route path="/guia-tamanhos" component={SizeGuidePage} />
       <Route component={NotFound} />
 
     </Switch>

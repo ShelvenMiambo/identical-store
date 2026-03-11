@@ -1,4 +1,4 @@
-import { useParams, useRoute } from "wouter";
+import { useParams, useRoute, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -211,7 +211,11 @@ export default function ProductPage({ onAddToCart }: ProductPageProps) {
                 <label className="font-semibold text-sm uppercase tracking-wider">
                   Tamanho
                 </label>
-                <button className="text-sm text-primary hover:underline">Guia de Tamanhos</button>
+                <Link href="/guia-tamanhos">
+                  <a className="text-sm text-primary hover:underline flex items-center gap-1" data-testid="link-size-guide">
+                    📏 Guia de Tamanhos
+                  </a>
+                </Link>
               </div>
               <div className="flex flex-wrap gap-2">
                 {product.tamanhos.map((size) => (

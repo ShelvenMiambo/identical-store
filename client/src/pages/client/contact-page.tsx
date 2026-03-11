@@ -50,10 +50,12 @@ export default function ContactPage() {
                   Ligue ou envie mensagem via WhatsApp
                 </p>
                 <a
-                  href="tel:+258840000000"
+                  href="https://wa.me/258848755045"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-primary hover:underline font-medium"
                 >
-                  +258 84 000 0000
+                  +258 84 875 5045
                 </a>
               </div>
             </CardContent>
@@ -103,22 +105,38 @@ export default function ContactPage() {
           <p className="text-muted-foreground mb-6">
             Fique a par das novidades, lançamentos e promoções exclusivas.
           </p>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <a
-              href="https://instagram.com/identical"
+              href="https://www.instagram.com/identical_oficial?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3 bg-primary text-primary-foreground rounded-md font-semibold hover-elevate active-elevate-2"
             >
-              Instagram
+              📸 Instagram
             </a>
             <a
-              href="https://facebook.com/identical"
+              href="https://www.tiktok.com/@identical.oficial?_t=ZN-8uVZI4apvrq&_r=1"
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3 border rounded-md font-semibold hover-elevate active-elevate-2"
             >
-              Facebook
+              🎵 TikTok
+            </a>
+            <a
+              href="https://wa.me/258848755045"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-3 border rounded-md font-semibold hover-elevate active-elevate-2"
+            >
+              💬 WhatsApp
+            </a>
+            <a
+              href="https://chat.whatsapp.com/BtwDDZiZVraC9PbzeTsfWU"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-3 border rounded-md font-semibold hover-elevate active-elevate-2"
+            >
+              👥 Grupo WhatsApp
             </a>
           </div>
         </div>
