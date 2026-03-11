@@ -57,6 +57,49 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // ── Auto-migrations ao iniciar ──────────────────────────────────────────
+  // Garante que todas as colunas/tabelas estão criadas na BD antes de abrir o servidor.
+  try {
+    const { neon } = await import('@neondatabase/serverless');
+    const sql = neon(process.env.DATABASE_URL!);
+
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS comprovante_url TEXT`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS metodo_pagamento TEXT`;
+    await sql`
+      CREATE TABLE IF NOT EXISTS site_settings (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        hero_title TEXT NOT NULL DEFAULT 'Be Different, Be Classic',
+        hero_subtitle TEXT NOT NULL DEFAULT 'Streetwear moçambicano autêntico. Raízes urbanas com forte identidade local.',
+        banners TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+        highlights JSONB NOT NULL DEFAULT '[]'::JSONB,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`;
+    await sql`INSERT INTO site_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING`;
+    await sql`
+      CREATE TABLE IF NOT EXISTS order_history (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        order_id VARCHAR NOT NULL, nome_cliente TEXT NOT NULL,
+        telefone_cliente TEXT NOT NULL, email_cliente TEXT,
+        endereco_entrega TEXT, provincia_entrega TEXT, metodo_pagamento TEXT,
+        subtotal DECIMAL(10,2), desconto DECIMAL(10,2) DEFAULT 0,
+        total DECIMAL(10,2) NOT NULL, status_final TEXT NOT NULL,
+        itens JSONB NOT NULL DEFAULT '[]'::JSONB,
+        data_pedido TIMESTAMP NOT NULL, data_finalizacao TIMESTAMP NOT NULL DEFAULT NOW()
+      )`;
+    await sql`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS payment_contacts JSONB NOT NULL DEFAULT '{"mpesa":"","emola":"","mbim":""}'::JSONB`;
+    await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS preco_promocional DECIMAL(10,2)`;
+
+    log('✅ Migrations automáticas concluídas');
+  } catch (err: any) {
+    // Ignorar erros de coluna já existente (código 42701)
+    if (!err.message?.includes('already exists')) {
+      log(`⚠️ Erro em migration: ${err.message}`);
+    } else {
+      log('✅ Migrations: colunas já existiam');
+    }
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   const server = await registerRoutes(app);
 
   // Criar usuário admin automaticamente

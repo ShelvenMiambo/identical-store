@@ -17,7 +17,6 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Edit, Trash2, X, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ComboboxCreatable } from "@/components/ui/combobox-creatable";
 
 /* ─── tipos locais ─── */
 type ProductForm = {
@@ -380,36 +379,100 @@ export default function ProductsPage() {
                             )}
                         </div>
 
-                        {/* Coleção */}
+                        {/* Coleção — select nativo + criar inline */}
                         <div className="space-y-2">
-                            <Label>Coleção</Label>
-                            <ComboboxCreatable
-                                options={collections.map(c => ({ id: c.id, label: c.nome }))}
+                            <Label htmlFor="pf-col">Coleção</Label>
+                            <select
+                                id="pf-col"
                                 value={form.collectionId}
-                                onSelect={(id) => setForm({ ...form, collectionId: id })}
-                                onCreate={async (nome) => {
-                                    const result = await createCollectionMutation.mutateAsync(nome);
-                                    return result.id;
-                                }}
-                                placeholder="Selecionar coleção..."
-                                createLabel="Criar coleção"
-                            />
+                                onChange={(e) => setForm({ ...form, collectionId: e.target.value })}
+                                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            >
+                                <option value="">— Sem coleção —</option>
+                                {collections.map(c => (
+                                    <option key={c.id} value={c.id}>{c.nome}</option>
+                                ))}
+                            </select>
+                            <div className="flex gap-2">
+                                <Input
+                                    id="pf-col-new"
+                                    placeholder="Criar nova coleção..."
+                                    className="h-8 text-xs"
+                                    onKeyDown={async (e) => {
+                                        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                                            e.preventDefault();
+                                            const result = await createCollectionMutation.mutateAsync(e.currentTarget.value.trim());
+                                            setForm(prev => ({ ...prev, collectionId: result.id }));
+                                            e.currentTarget.value = '';
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-xs px-2 shrink-0"
+                                    type="button"
+                                    onClick={async (e) => {
+                                        const input = document.getElementById('pf-col-new') as HTMLInputElement;
+                                        if (input?.value.trim()) {
+                                            const result = await createCollectionMutation.mutateAsync(input.value.trim());
+                                            setForm(prev => ({ ...prev, collectionId: result.id }));
+                                            input.value = '';
+                                        }
+                                    }}
+                                    disabled={createCollectionMutation.isPending}
+                                >
+                                    + Criar
+                                </Button>
+                            </div>
                         </div>
 
-                        {/* Categoria */}
+                        {/* Categoria — select nativo + criar inline */}
                         <div className="space-y-2">
-                            <Label>Categoria</Label>
-                            <ComboboxCreatable
-                                options={categories.map(c => ({ id: c.id, label: c.nome }))}
+                            <Label htmlFor="pf-cat">Categoria</Label>
+                            <select
+                                id="pf-cat"
                                 value={form.categoryId}
-                                onSelect={(id) => setForm({ ...form, categoryId: id })}
-                                onCreate={async (nome) => {
-                                    const result = await createCategoryMutation.mutateAsync(nome);
-                                    return result.id;
-                                }}
-                                placeholder="Selecionar categoria..."
-                                createLabel="Criar categoria"
-                            />
+                                onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            >
+                                <option value="">— Sem categoria —</option>
+                                {categories.map(c => (
+                                    <option key={c.id} value={c.id}>{c.nome}</option>
+                                ))}
+                            </select>
+                            <div className="flex gap-2">
+                                <Input
+                                    id="pf-cat-new"
+                                    placeholder="Criar nova categoria..."
+                                    className="h-8 text-xs"
+                                    onKeyDown={async (e) => {
+                                        if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                                            e.preventDefault();
+                                            const result = await createCategoryMutation.mutateAsync(e.currentTarget.value.trim());
+                                            setForm(prev => ({ ...prev, categoryId: result.id }));
+                                            e.currentTarget.value = '';
+                                        }
+                                    }}
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-xs px-2 shrink-0"
+                                    type="button"
+                                    onClick={async () => {
+                                        const input = document.getElementById('pf-cat-new') as HTMLInputElement;
+                                        if (input?.value.trim()) {
+                                            const result = await createCategoryMutation.mutateAsync(input.value.trim());
+                                            setForm(prev => ({ ...prev, categoryId: result.id }));
+                                            input.value = '';
+                                        }
+                                    }}
+                                    disabled={createCategoryMutation.isPending}
+                                >
+                                    + Criar
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Tamanhos */}
