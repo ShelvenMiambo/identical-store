@@ -158,6 +158,25 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                       >
                         {isLoading ? "A entrar..." : "Entrar"}
                       </Button>
+
+                      {/* Esqueci a password → WhatsApp do admin */}
+                      <div className="text-center pt-1">
+                        <a
+                          href={(() => {
+                            const username = loginForm.getValues("username");
+                            const msg = username
+                              ? `Olá, esqueci a minha password. O meu username é: *${username}*. Podem ajudar-me a recuperar o acesso?`
+                              : `Olá, esqueci a minha password da loja ID≠NTICAL. Podem ajudar-me a recuperar o acesso?`;
+                            return `https://wa.me/258848755045?text=${encodeURIComponent(msg)}`;
+                          })()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+                          data-testid="link-forgot-password"
+                        >
+                          Esqueci a password
+                        </a>
+                      </div>
                     </form>
                   </Form>
                 </CardContent>
