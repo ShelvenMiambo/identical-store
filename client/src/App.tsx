@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient, apiRequest } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -67,7 +67,13 @@ function ClientRouter({
         {(params) => <ProductPage onAddToCart={onAddToCart} />}
       </Route>
       <Route path="/checkout">
-        {() => <CheckoutPage cartItems={cartItems} onClearCart={onClearCart} />}
+        {() =>
+          user ? (
+            <CheckoutPage cartItems={cartItems} onClearCart={onClearCart} />
+          ) : (
+            <Redirect to="/auth" />
+          )
+        }
       </Route>
       <Route path="/auth">
         {() => <AuthPage user={user} onLogin={onLogin} onRegister={onRegister} />}
@@ -134,27 +140,34 @@ function AppContent() {
   }, [cartItems]);
 
   const handleAddToCart = (item: CartItem) => {
+    // ── Bloquear utilizadores não autenticados ──
+    // Aguardar que a sessão carregue antes de verificar (evitar falsos bloqueios)
+    if (!isLoading && !user) {
+      toast({
+        title: "Login necessário",
+        description: "Precisa de criar uma conta ou fazer login para adicionar produtos ao carrinho.",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
     setCartItems((prev) => {
-      // Check if item with same product, size, and color exists
       const existingIndex = prev.findIndex(
         (i) =>
           i.productId === item.productId &&
           i.tamanho === item.tamanho &&
           i.cor === item.cor
       );
-
       if (existingIndex >= 0) {
-        // Update quantity
         const updated = [...prev];
         updated[existingIndex].quantidade += item.quantidade;
         return updated;
       } else {
-        // Add new item
         return [...prev, item];
       }
     });
 
-    // Open cart drawer
     setCartDrawerOpen(true);
   };
 
@@ -334,6 +347,7 @@ function AppContent() {
         items={cartItems}
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
+        user={user}
       />
 
       <Toaster />

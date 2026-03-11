@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, LogIn } from "lucide-react";
 import { CartItem } from "@shared/schema";
 import { Link } from "wouter";
 
@@ -17,6 +17,7 @@ interface CartDrawerProps {
   items: CartItem[];
   onUpdateQuantity: (productId: string, tamanho: string, cor: string, newQuantity: number) => void;
   onRemoveItem: (productId: string, tamanho: string, cor: string) => void;
+  user?: any;
 }
 
 export function CartDrawer({
@@ -25,6 +26,7 @@ export function CartDrawer({
   items,
   onUpdateQuantity,
   onRemoveItem,
+  user,
 }: CartDrawerProps) {
   const subtotal = items.reduce(
     (sum, item) => sum + parseFloat(item.precoProduto) * item.quantidade,
@@ -158,16 +160,43 @@ export function CartDrawer({
                 <span>Subtotal</span>
                 <span data-testid="text-cart-subtotal">{subtotalFormatado}</span>
               </div>
-              <Link href="/checkout">
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={() => onOpenChange(false)}
-                  data-testid="button-checkout"
-                >
-                  Finalizar Compra
-                </Button>
-              </Link>
+
+              {user ? (
+                /* Utilizador autenticado → pode fazer checkout */
+                <Link href="/checkout">
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={() => onOpenChange(false)}
+                    data-testid="button-checkout"
+                  >
+                    Finalizar Compra
+                  </Button>
+                </Link>
+              ) : (
+                /* Utilizador não autenticado → mostrar aviso + login */
+                <div className="space-y-3">
+                  <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 text-center">
+                    <p className="text-sm text-amber-800 dark:text-amber-300 font-medium">
+                      🔒 É necessário ter conta para finalizar a compra
+                    </p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      Crie uma conta gratuita ou faça login para continuar
+                    </p>
+                  </div>
+                  <Link href="/auth">
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      onClick={() => onOpenChange(false)}
+                      data-testid="button-login-to-checkout"
+                    >
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Entrar / Criar Conta
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </SheetFooter>
         )}
