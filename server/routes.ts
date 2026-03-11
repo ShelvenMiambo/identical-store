@@ -202,16 +202,18 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Send confirmation email to client (best-effort)
+      // Enviar emails (best-effort — não bloqueia a resposta ao cliente)
       try {
-        const { enviarEmailConfirmacaoPedido, enviarEmailComprovanteAdmin } = await import("./email");
+        const { enviarEmailConfirmacaoPedido, enviarEmailComprovanteAdmin, enviarEmailNovoAdmin } = await import("./email");
+        // Email ao cliente (se tem email)
         if (orderData.emailCliente) {
-          await enviarEmailConfirmacaoPedido(order, items);
+          enviarEmailConfirmacaoPedido(order, items).catch(() => { });
         }
-        // Notify admin with proof of payment
+        // Email ao admin — SEMPRE (com ou sem comprovativo)
         if (orderData.comprovanteUrl) {
-          await enviarEmailComprovanteAdmin(order, items, orderData.comprovanteUrl);
-          console.log('📧 Email com comprovativo enviado ao admin');
+          enviarEmailComprovanteAdmin(order, items, orderData.comprovanteUrl).catch(() => { });
+        } else {
+          enviarEmailNovoAdmin(order, items).catch(() => { });
         }
       } catch (emailError) {
         console.error('⚠️ Erro ao enviar email:', emailError);

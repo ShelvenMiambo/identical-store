@@ -85,6 +85,8 @@ export class PostgresStorage implements IStorage {
     }
 
     async deleteUser(id: string): Promise<boolean> {
+        // Anular a FK em pedidos antes de apagar o user (evita constraint violation)
+        await db.update(orders).set({ userId: null }).where(eq(orders.userId, id));
         const result = await db.delete(users).where(eq(users.id, id)).returning();
         return result.length > 0;
     }

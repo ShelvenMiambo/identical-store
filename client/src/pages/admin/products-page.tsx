@@ -25,6 +25,7 @@ type ProductForm = {
     slug: string;
     descricao: string;
     preco: string;
+    precoPromocional: string;   // vazio = sem promoção
     collectionId: string;
     categoryId: string;
     tamanhos: string[];
@@ -37,7 +38,7 @@ type ProductForm = {
 };
 
 const EMPTY_FORM: ProductForm = {
-    nome: "", slug: "", descricao: "", preco: "",
+    nome: "", slug: "", descricao: "", preco: "", precoPromocional: "",
     collectionId: "", categoryId: "",
     tamanhos: [], cores: [], imagens: [],
     estoque: "10", destaque: false, novo: false, ativo: true,
@@ -122,6 +123,7 @@ export default function ProductsPage() {
             slug: product.slug,
             descricao: product.descricao || "",
             preco: product.preco,
+            precoPromocional: (product as any).precoPromocional || "",
             collectionId: product.collectionId || "",
             categoryId: (product as any).categoryId || "",
             tamanhos: product.tamanhos || [],
@@ -136,7 +138,11 @@ export default function ProductsPage() {
     };
 
     const handleSave = () => {
-        const data = { ...form, estoque: parseInt(form.estoque) || 10 };
+        const data = {
+            ...form,
+            estoque: parseInt(form.estoque) || 10,
+            precoPromocional: form.precoPromocional.trim() ? form.precoPromocional.trim() : null,
+        };
         if (editingProduct) {
             updateProductMutation.mutate({ id: editingProduct.id, data });
         } else {
@@ -224,7 +230,15 @@ export default function ProductsPage() {
                                                 {product.nome}
                                             </TableCell>
                                             <TableCell className="whitespace-nowrap">
-                                                {fmt(product.preco)}
+                                                {(product as any).precoPromocional ? (
+                                                    <div>
+                                                        <span className="line-through text-muted-foreground text-xs">{fmt(product.preco)}</span>
+                                                        <br />
+                                                        <span className="font-bold text-orange-600">{fmt((product as any).precoPromocional)}</span>
+                                                    </div>
+                                                ) : (
+                                                    fmt(product.preco)
+                                                )}
                                             </TableCell>
                                             <TableCell className="hidden md:table-cell">{product.estoque || 0}</TableCell>
                                             <TableCell className="hidden sm:table-cell">
@@ -234,6 +248,7 @@ export default function ProductsPage() {
                                                     </Badge>
                                                     {product.destaque && <Badge variant="outline" className="text-xs border-amber-400 text-amber-600">⭐ Destaque</Badge>}
                                                     {product.novo && <Badge variant="outline" className="text-xs border-blue-400 text-blue-600">🆕 Novo</Badge>}
+                                                    {(product as any).precoPromocional && <Badge variant="outline" className="text-xs border-orange-400 text-orange-600">🏷️ Promo</Badge>}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
@@ -342,6 +357,27 @@ export default function ProductsPage() {
                                     onChange={(e) => setForm({ ...form, estoque: e.target.value })}
                                 />
                             </div>
+                        </div>
+
+                        {/* Preço Promocional (opcional) */}
+                        <div className="space-y-2 p-3 rounded-lg border border-dashed border-orange-300 bg-orange-50 dark:bg-orange-950/20">
+                            <Label htmlFor="pf-promo" className="text-orange-700 dark:text-orange-400 font-semibold flex items-center gap-2">
+                                🏷️ Preço Promocional (MZN)
+                                <span className="font-normal text-xs text-muted-foreground">— deixe vazio para sem promoção</span>
+                            </Label>
+                            <Input
+                                id="pf-promo"
+                                type="number"
+                                placeholder="Ex: 850 (preço original ficará riscado)"
+                                value={form.precoPromocional}
+                                onChange={(e) => setForm({ ...form, precoPromocional: e.target.value })}
+                                className="border-orange-200 focus:border-orange-400"
+                            />
+                            {form.precoPromocional && parseFloat(form.precoPromocional) > 0 && (
+                                <p className="text-xs text-orange-600 dark:text-orange-400">
+                                    ✅ Na loja: <span className="line-through text-muted-foreground">{form.preco} MZN</span> → <strong>{form.precoPromocional} MZN</strong>
+                                </p>
+                            )}
                         </div>
 
                         {/* Coleção */}

@@ -74,6 +74,13 @@ async function migrate() {
     `;
         console.log('✅ Coluna payment_contacts adicionada à tabela site_settings');
 
+        // Adicionar coluna preco_promocional à tabela products (para promoções)
+        await sql`
+            ALTER TABLE products
+            ADD COLUMN IF NOT EXISTS preco_promocional DECIMAL(10,2);
+        `;
+        console.log('✅ Coluna preco_promocional adicionada à tabela products');
+
         console.log('🎉 Migrations concluídas com sucesso!');
     } catch (err: any) {
         console.error('❌ Erro na migration:', err.message);

@@ -193,6 +193,11 @@ function AppContent() {
 
   const [location, navigate] = useLocation();
 
+  // TAREFA 4 — Scroll para o topo quando muda de página
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [location]);
+
   const handleLogin = async (data: any) => {
     try {
       await apiRequest("POST", "/api/login", data);

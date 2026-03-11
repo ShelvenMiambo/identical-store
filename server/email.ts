@@ -342,3 +342,53 @@ export async function enviarEmailComprovanteAdmin(
     html,
   });
 }
+
+/**
+ * Notifica o admin de um novo pedido sem comprovativo
+ */
+export async function enviarEmailNovoAdmin(order: any, items: any[]): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@identical.co.mz';
+  const payLabels: Record<string, string> = { mpesa: 'M-Pesa', emola: 'e-Mola', mbim: 'Millennium BIM' };
+  const metodo = payLabels[order.metodoPagamento] ?? order.metodoPagamento ?? 'Não especificado';
+
+  const itemsList = items
+    .map(i => `<li>${i.nomeProduto} (${i.tamanho}/${i.cor}) &times; ${i.quantidade} — ${parseFloat(i.precoProduto).toFixed(2)} MZN</li>`)
+    .join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;color:#333;">
+    <div style="max-width:600px;margin:0 auto;">
+      <div style="background:#111;color:white;padding:16px 20px;border-radius:6px 6px 0 0;">
+        <h2 style="margin:0;">🛒 IDENTICAL — Novo Pedido Recebido</h2>
+      </div>
+      <div style="background:#f9f9f9;padding:20px;border:1px solid #eee;">
+        <p><strong>Pedido:</strong> #${order.id.slice(0, 8).toUpperCase()}</p>
+        <p><strong>Método:</strong> <span style="background:#e8f5e9;color:#2e7d32;padding:3px 10px;border-radius:20px;font-size:13px;">${metodo}</span></p>
+        <p><strong>Status:</strong> <span style="background:#fff3cd;color:#856404;padding:3px 10px;border-radius:20px;font-size:13px;">⏳ Aguardando confirmação de pagamento</span></p>
+        <hr>
+        <h3>👤 Cliente</h3>
+        <p>
+          <strong>Nome:</strong> ${order.nomeCliente}<br>
+          <strong>Telef.:</strong> ${order.telefoneCliente}<br>
+          ${order.emailCliente ? `<strong>Email:</strong> ${order.emailCliente}<br>` : ''}
+          <strong>Morada:</strong> ${order.enderecoEntrega}${order.cidadeEntrega ? ', ' + order.cidadeEntrega : ''}, ${order.provinciaEntrega}
+        </p>
+        <hr>
+        <h3>🛒 Itens</h3>
+        <ul>${itemsList}</ul>
+        <p style="font-size:16px;font-weight:bold;">TOTAL: ${parseFloat(order.total).toFixed(2)} MZN</p>
+        <hr>
+        <div style="background:#fff3cd;border-left:4px solid #ffc107;padding:12px;border-radius:4px;">
+          <strong>⚠️ Sem comprovativo:</strong> O cliente não anexou comprovativo de pagamento. Verifique o painel admin e contacte-o se necessário.
+        </div>
+        <hr>
+        <p style="color:#888;font-size:11px;">Email automático da plataforma IDENTICAL. Aceda ao painel admin para alterar o estado do pedido.</p>
+      </div>
+    </div>
+  </body></html>`;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `🛍️ Novo Pedido #${order.id.slice(0, 8).toUpperCase()} — ${order.nomeCliente}`,
+    html,
+  });
+}

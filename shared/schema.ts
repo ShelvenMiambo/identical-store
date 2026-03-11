@@ -72,6 +72,7 @@ export const products = pgTable("products", {
   slug: text("slug").notNull().unique(),
   descricao: text("descricao"),
   preco: decimal("preco", { precision: 10, scale: 2 }).notNull(),
+  precoPromocional: decimal("preco_promocional", { precision: 10, scale: 2 }),  // null = sem promoção
   collectionId: varchar("collection_id").references(() => collections.id),
   categoryId: varchar("category_id").references(() => categories.id),
   imagens: text("imagens").array().notNull(),
