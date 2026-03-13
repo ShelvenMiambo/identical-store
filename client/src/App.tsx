@@ -264,7 +264,7 @@ function AppContent() {
   const handleLogout = async () => {
     try {
       await apiRequest("POST", "/api/logout");
-      queryClient.invalidateQueries({ queryKey: ["/api/session"] });
+      queryClient.clear(); // Clear all cached user data (orders, etc) to prevent data leaking between logins
       await refetchUser();
       toast({
         title: "Sessão terminada",

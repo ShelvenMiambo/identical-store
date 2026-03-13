@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Minus, Plus, Trash2, ShoppingBag, LogIn } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, LogIn, PackageSearch } from "lucide-react";
 import { CartItem } from "@shared/schema";
 import { Link } from "wouter";
 
@@ -62,6 +62,22 @@ export function CartDrawer({
                   Explorar Produtos
                 </Button>
               </Link>
+              <div className="mt-8 pt-8 border-t w-full flex flex-col items-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3 font-semibold">Procuras uma encomenda?</p>
+                {user ? (
+                   <Link href="/conta">
+                     <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => onOpenChange(false)}>
+                       <PackageSearch className="h-4 w-4" /> Ver os meus pedidos
+                     </Button>
+                   </Link>
+                ) : (
+                   <Link href="/localizar-pedido">
+                     <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => onOpenChange(false)}>
+                       <PackageSearch className="h-4 w-4" /> Acompanhar Pedido (ID)
+                     </Button>
+                   </Link>
+                )}
+              </div>
             </div>
           ) : (
             <div className="space-y-6">
@@ -163,16 +179,29 @@ export function CartDrawer({
 
               {user ? (
                 /* Utilizador autenticado → pode fazer checkout */
-                <Link href="/checkout">
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={() => onOpenChange(false)}
-                    data-testid="button-checkout"
-                  >
-                    Finalizar Compra
-                  </Button>
-                </Link>
+                <div className="space-y-3">
+                  <Link href="/checkout">
+                    <Button
+                      className="w-full font-semibold"
+                      size="lg"
+                      onClick={() => onOpenChange(false)}
+                      data-testid="button-checkout"
+                    >
+                      Finalizar Compra
+                    </Button>
+                  </Link>
+                  <Link href="/conta">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-xs font-semibold uppercase tracking-wider gap-2 text-muted-foreground"
+                      onClick={() => onOpenChange(false)}
+                    >
+                      <PackageSearch className="h-3.5 w-3.5" />
+                      Acompanhar Pedidos Recentes
+                    </Button>
+                  </Link>
+                </div>
               ) : (
                 /* Utilizador não autenticado → mostrar aviso + login */
                 <div className="space-y-3">
