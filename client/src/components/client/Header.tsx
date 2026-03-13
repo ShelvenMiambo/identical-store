@@ -13,7 +13,7 @@ interface HeaderProps {
 }
 
 export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -24,6 +24,13 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleMobileNavigate = (href: string) => {
+    setMobileMenuOpen(false);
+    setTimeout(() => {
+      setLocation(href);
+    }, 200);
+  };
 
   const navItems = [
     { label: "Loja", href: "/loja" },
@@ -116,36 +123,31 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <nav className="flex flex-col gap-6 mt-8">
                   {navItems.map((item) => (
-                    <Link key={item.href} href={item.href}>
-                      <a
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`text-lg font-semibold uppercase tracking-wider hover-elevate px-4 py-2 rounded-md block ${location === item.href ? "text-foreground" : "text-muted-foreground"
-                          }`}
-                        data-testid={`mobile-link-${item.label.toLowerCase()}`}
-                      >
-                        {item.label}
-                      </a>
-                    </Link>
-                  ))}
-                  <Link href="/localizar-pedido">
-                    <a
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-lg font-semibold uppercase tracking-wider hover-elevate px-4 py-2 rounded-md block text-muted-foreground flex items-center gap-2"
-                      data-testid="mobile-link-track"
+                    <button
+                      key={item.href}
+                      onClick={() => handleMobileNavigate(item.href)}
+                      className={`text-left text-lg font-semibold uppercase tracking-wider hover-elevate px-4 py-2 rounded-md block ${location === item.href ? "text-foreground" : "text-muted-foreground"
+                        }`}
+                      data-testid={`mobile-link-${item.label.toLowerCase()}`}
                     >
-                      <Search className="h-4 w-4" /> Localizar Pedido
-                    </a>
-                  </Link>
+                      {item.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handleMobileNavigate('/localizar-pedido')}
+                    className="text-left text-lg font-semibold uppercase tracking-wider hover-elevate px-4 py-2 rounded-md block text-muted-foreground flex items-center gap-2"
+                    data-testid="mobile-link-track"
+                  >
+                    <Search className="h-4 w-4" /> Localizar Pedido
+                  </button>
                   {!user && (
-                    <Link href="/auth">
-                      <a
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="text-lg font-semibold uppercase tracking-wider text-primary hover-elevate px-4 py-2 rounded-md block"
-                        data-testid="mobile-link-auth"
-                      >
-                        Entrar
-                      </a>
-                    </Link>
+                    <button
+                      onClick={() => handleMobileNavigate('/auth')}
+                      className="text-left text-lg font-semibold uppercase tracking-wider text-primary hover-elevate px-4 py-2 rounded-md block"
+                      data-testid="mobile-link-auth"
+                    >
+                      Entrar
+                    </button>
                   )}
                 </nav>
               </SheetContent>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Trash2, ShoppingBag, LogIn, PackageSearch } from "lucide-react";
 import { CartItem } from "@shared/schema";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 
 interface CartDrawerProps {
   open: boolean;
@@ -38,6 +38,15 @@ export function CartDrawer({
     currency: "MZN",
   }).format(subtotal);
 
+  const [, setLocation] = useLocation();
+
+  const handleNavigate = (href: string) => {
+    onOpenChange(false);
+    setTimeout(() => {
+      setLocation(href);
+    }, 200);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col p-0">
@@ -57,25 +66,20 @@ export function CartDrawer({
               <p className="text-sm text-muted-foreground mb-6">
                 Adicione produtos para começar a comprar
               </p>
-              <Link href="/loja">
-                <Button onClick={() => onOpenChange(false)} data-testid="button-continue-shopping">
-                  Explorar Produtos
-                </Button>
-              </Link>
+              <Button onClick={() => handleNavigate('/loja')} data-testid="button-continue-shopping">
+                Explorar Produtos
+              </Button>
+              
               <div className="mt-8 pt-8 border-t w-full flex flex-col items-center">
                 <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3 font-semibold">Procuras uma encomenda?</p>
                 {user ? (
-                   <Link href="/conta">
-                     <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => onOpenChange(false)}>
-                       <PackageSearch className="h-4 w-4" /> Ver os meus pedidos
-                     </Button>
-                   </Link>
+                   <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleNavigate('/conta')}>
+                     <PackageSearch className="h-4 w-4" /> Ver os meus pedidos
+                   </Button>
                 ) : (
-                   <Link href="/localizar-pedido">
-                     <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => onOpenChange(false)}>
-                       <PackageSearch className="h-4 w-4" /> Acompanhar Pedido (ID)
-                     </Button>
-                   </Link>
+                   <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleNavigate('/localizar-pedido')}>
+                     <PackageSearch className="h-4 w-4" /> Acompanhar Pedido (ID)
+                   </Button>
                 )}
               </div>
             </div>
@@ -180,27 +184,24 @@ export function CartDrawer({
               {user ? (
                 /* Utilizador autenticado → pode fazer checkout */
                 <div className="space-y-3">
-                  <Link href="/checkout">
-                    <Button
-                      className="w-full font-semibold"
-                      size="lg"
-                      onClick={() => onOpenChange(false)}
-                      data-testid="button-checkout"
-                    >
-                      Finalizar Compra
-                    </Button>
-                  </Link>
-                  <Link href="/conta">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full text-xs font-semibold uppercase tracking-wider gap-2 text-muted-foreground"
-                      onClick={() => onOpenChange(false)}
-                    >
-                      <PackageSearch className="h-3.5 w-3.5" />
-                      Acompanhar Pedidos Recentes
-                    </Button>
-                  </Link>
+                  <Button
+                    className="w-full font-semibold"
+                    size="lg"
+                    onClick={() => handleNavigate('/checkout')}
+                    data-testid="button-checkout"
+                  >
+                    Finalizar Compra
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs font-semibold uppercase tracking-wider gap-2 text-muted-foreground"
+                    onClick={() => handleNavigate('/conta')}
+                  >
+                    <PackageSearch className="h-3.5 w-3.5" />
+                    Acompanhar Pedidos Recentes
+                  </Button>
                 </div>
               ) : (
                 /* Utilizador não autenticado → mostrar aviso + login */
@@ -213,17 +214,15 @@ export function CartDrawer({
                       Crie uma conta gratuita ou faça login para continuar
                     </p>
                   </div>
-                  <Link href="/auth">
-                    <Button
-                      className="w-full"
-                      size="lg"
-                      onClick={() => onOpenChange(false)}
-                      data-testid="button-login-to-checkout"
-                    >
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Entrar / Criar Conta
-                    </Button>
-                  </Link>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={() => handleNavigate('/auth')}
+                    data-testid="button-login-to-checkout"
+                  >
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Entrar / Criar Conta
+                  </Button>
                 </div>
               )}
             </div>

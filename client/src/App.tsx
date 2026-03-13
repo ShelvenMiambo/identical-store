@@ -213,6 +213,15 @@ function AppContent() {
   // TAREFA 4 — Scroll para o topo quando muda de página
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+    // Fix fallback definitivo para bugs da Radix UI (Sheet/Dialog) que bloqueiam cliques e scroll após navegação SPA
+    document.body.style.pointerEvents = "auto";
+    document.body.style.overflow = "visible";
+    document.documentElement.style.pointerEvents = "auto";
+    document.documentElement.style.overflow = "visible";
+    
+    // Remover classes / atributos de lock
+    const headerLock = document.querySelector('[data-scroll-locked]');
+    if (headerLock) headerLock.removeAttribute('data-scroll-locked');
   }, [location]);
 
   const handleLogin = async (data: any) => {
