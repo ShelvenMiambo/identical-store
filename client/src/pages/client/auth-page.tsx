@@ -14,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Eye, EyeOff } from "lucide-react";
 import { Redirect } from "wouter";
 import heroImage from "@assets/IMG-20251110-WA0110_1763061428733.jpg";
 
@@ -41,6 +42,8 @@ interface AuthPageProps {
 
 export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoginPw, setShowLoginPw] = useState(false);
+  const [showRegisterPw, setShowRegisterPw] = useState(false);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -136,14 +139,25 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                           <FormItem>
                             <FormLabel className="font-semibold">Password</FormLabel>
                             <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="••••••••"
-                                autoComplete="current-password"
-                                className="h-12 text-base"
-                                {...field}
-                                data-testid="input-login-password"
-                              />
+                              <div className="relative">
+                                <Input
+                                  type={showLoginPw ? "text" : "password"}
+                                  placeholder="••••••••"
+                                  autoComplete="current-password"
+                                  className="h-12 text-base pr-11"
+                                  {...field}
+                                  data-testid="input-login-password"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowLoginPw(p => !p)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                  tabIndex={-1}
+                                  aria-label={showLoginPw ? "Ocultar password" : "Mostrar password"}
+                                >
+                                  {showLoginPw ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -283,14 +297,25 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                           <FormItem>
                             <FormLabel className="font-semibold">Password</FormLabel>
                             <FormControl>
-                              <Input
-                                type="password"
-                                placeholder="Mínimo 6 caracteres"
-                                autoComplete="new-password"
-                                className="h-12 text-base"
-                                {...field}
-                                data-testid="input-register-password"
-                              />
+                              <div className="relative">
+                                <Input
+                                  type={showRegisterPw ? "text" : "password"}
+                                  placeholder="Mínimo 6 caracteres"
+                                  autoComplete="new-password"
+                                  className="h-12 text-base pr-11"
+                                  {...field}
+                                  data-testid="input-register-password"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowRegisterPw(p => !p)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                  tabIndex={-1}
+                                  aria-label={showRegisterPw ? "Ocultar password" : "Mostrar password"}
+                                >
+                                  {showRegisterPw ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>

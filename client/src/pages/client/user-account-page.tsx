@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Package, User as UserIcon, LogOut, ShoppingBag } from "lucide-react";
+import { Package, User as UserIcon, LogOut, ShoppingBag, Eye, EyeOff, Lock, CheckCircle2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserAccountPageProps {
   user?: any;
@@ -16,6 +18,7 @@ interface UserAccountPageProps {
 }
 
 export default function UserAccountPage({ user, onLogout }: UserAccountPageProps) {
+  const { toast } = useToast();
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
     enabled: !!user,
@@ -162,7 +165,8 @@ export default function UserAccountPage({ user, onLogout }: UserAccountPageProps
 
           {/* ─── ABA PERFIL ─── */}
           <TabsContent value="profile">
-            <Card>
+            {/* Informações da Conta */}
+            <Card className="mb-4">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Informações da Conta</CardTitle>
               </CardHeader>
@@ -181,25 +185,130 @@ export default function UserAccountPage({ user, onLogout }: UserAccountPageProps
                     </div>
                   </div>
                 ))}
-
-                <Separator className="mt-2" />
-
-                <div className="pt-4">
-                  <Button
-                    variant="destructive"
-                    className="w-full h-12 font-semibold"
-                    onClick={onLogout}
-                    data-testid="button-logout"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sair da Conta
-                  </Button>
-                </div>
               </CardContent>
             </Card>
+
+            {/* Alterar Password */}
+            <ChangePasswordSection toast={toast} />
+
+            <Separator className="my-4" />
+            <Button
+              variant="destructive"
+              className="w-full h-12 font-semibold"
+              onClick={onLogout}
+              data-testid="button-logout"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair da Conta
+            </Button>
           </TabsContent>
         </Tabs>
       </div>
     </div>
+  );
+}
+
+/* ────── Sub-componente: Alterar Password ────── */
+function ChangePasswordSection({ toast }: { toast: any }) {
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPw.length < 6) {
+      toast({ title: "❌ Password muito curta", description: "A nova password deve ter pelo menos 6 caracteres.", variant: "destructive" });
+      return;
+    }
+    if (newPw !== confirmPw) {
+      toast({ title: "❌ As passwords não coincidem", description: "Confirma que a nova password e a confirmação são iguais.", variant: "destructive" });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/user/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
+        credentials: "include",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast({ title: "❌ Não foi possível alterar", description: data.message || "Tenta novamente.", variant: "destructive" });
+        return;
+      }
+      setSuccess(true);
+      setCurrentPw(""); setNewPw(""); setConfirmPw("");
+      toast({ title: "✅ Password alterada!", description: "A tua nova password já está activa." });
+      setTimeout(() => setSuccess(false), 4000);
+    } catch {
+      toast({ title: "❌ Erro de ligação", description: "Sem ligação ao servidor. Verifica a internet.", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const PwField = ({ label, value, onChange, show, onToggle, placeholder, testId }: any) => (
+    <div>
+      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-1.5">{label}</label>
+      <div className="relative">
+        <Input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="h-11 pr-11"
+          data-testid={testId}
+          autoComplete="off"
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          tabIndex={-1}
+        >
+          {show ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Lock className="h-4 w-4" />
+          Alterar Password
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {success ? (
+          <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+            <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+            <p className="text-sm text-green-700 dark:text-green-300 font-medium">Password alterada com sucesso!</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <PwField label="Password Actual" value={currentPw} onChange={setCurrentPw}
+              show={showCurrent} onToggle={() => setShowCurrent(p => !p)}
+              placeholder="Insere a tua password actual" testId="input-current-password" />
+            <PwField label="Nova Password" value={newPw} onChange={setNewPw}
+              show={showNew} onToggle={() => setShowNew(p => !p)}
+              placeholder="Mínimo 6 caracteres" testId="input-new-password" />
+            <PwField label="Confirmar Nova Password" value={confirmPw} onChange={setConfirmPw}
+              show={showConfirm} onToggle={() => setShowConfirm(p => !p)}
+              placeholder="Repete a nova password" testId="input-confirm-password" />
+            <Button type="submit" className="w-full" disabled={isLoading || !currentPw || !newPw || !confirmPw}>
+              {isLoading ? "A guardar..." : "Guardar Nova Password"}
+            </Button>
+          </form>
+        )}
+      </CardContent>
+    </Card>
   );
 }

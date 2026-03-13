@@ -150,4 +150,35 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
+
+  // ── Alterar password ──────────────────────────────────────────────
+  app.post("/api/user/change-password", async (req, res, next) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Preenche todos os campos." });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "A nova password deve ter pelo menos 6 caracteres." });
+    }
+
+    try {
+      const user = await storage.getUser((req.user as any).id);
+      if (!user) return res.status(404).json({ message: "Utilizador não encontrado." });
+
+      const passwordMatch = await comparePasswords(currentPassword, user.password);
+      if (!passwordMatch) {
+        return res.status(400).json({ message: "A password actual está incorrecta." });
+      }
+
+      const hashed = await hashPassword(newPassword);
+      await storage.updateUser(user.id, { password: hashed } as any);
+
+      res.json({ message: "Password alterada com sucesso." });
+    } catch (err) {
+      next(err);
+    }
+  });
 }
