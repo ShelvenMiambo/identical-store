@@ -318,6 +318,11 @@ export default function OrdersPage() {
                                     <span>Total</span>
                                     <span className="text-primary">{fmt(selectedOrder.total)}</span>
                                 </div>
+                                <div className="mt-3 pt-3 border-t">
+                                     <Button variant="outline" size="sm" className="w-full text-xs font-semibold shadow-sm" onClick={() => window.open(`/api/orders/${selectedOrder.id}/receipt`, '_blank')}>
+                                         <Download className="h-4 w-4 mr-2" /> Baixar Recibo PDF
+                                     </Button>
+                                </div>
                             </div>
 
                             {/* ── Comprovativo ── */}

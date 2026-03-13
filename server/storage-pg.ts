@@ -123,6 +123,10 @@ export class PostgresStorage implements IStorage {
     }
 
     async deleteProduct(id: string): Promise<boolean> {
+        const hasOrders = await db.select().from(orderItems).where(eq(orderItems.productId, id)).limit(1);
+        if (hasOrders.length > 0) {
+            throw new Error("PRODUTO_COM_PEDIDOS");
+        }
         const result = await db.delete(products).where(eq(products.id, id)).returning();
         return result.length > 0;
     }
@@ -175,6 +179,7 @@ export class PostgresStorage implements IStorage {
     }
 
     async deleteCollection(id: string): Promise<boolean> {
+        await db.update(products).set({ collectionId: null }).where(eq(products.collectionId, id));
         const result = await db.delete(collections).where(eq(collections.id, id)).returning();
         return result.length > 0;
     }
@@ -208,6 +213,7 @@ export class PostgresStorage implements IStorage {
     }
 
     async deleteCategory(id: string): Promise<boolean> {
+        await db.update(products).set({ categoryId: null }).where(eq(products.categoryId, id));
         const result = await db.delete(categories).where(eq(categories.id, id)).returning();
         return result.length > 0;
     }

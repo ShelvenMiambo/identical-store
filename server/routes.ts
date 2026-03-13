@@ -123,7 +123,7 @@ export function registerRoutes(app: Express): Server {
     try {
       const order = await storage.getOrder(req.params.id);
       if (!order) {
-        return res.status(404).send("Pedido não encontrado");
+        return res.status(404).json({ message: "Pedido não encontrado" });
       }
       // Authenticated non-admin users can only see their own orders
       if (req.user && !req.user.isAdmin && order.userId && order.userId !== req.user.id) {
@@ -132,6 +132,137 @@ export function registerRoutes(app: Express): Server {
       // Include order items in the response
       const items = await storage.getOrderItems(order.id);
       res.json({ ...order, items });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Export Receipt PDF for a specific order
+  app.get("/api/orders/:id/receipt", async (req, res, next) => {
+    try {
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).send("Pedido não encontrado");
+      }
+      
+      // Verification
+      if (req.user && !req.user.isAdmin && order.userId && order.userId !== req.user.id) {
+        return res.sendStatus(403);
+      }
+      
+      const items = await storage.getOrderItems(order.id);
+      const fmt = (v: string | null | undefined) =>
+        v ? parseFloat(v).toLocaleString("pt-MZ", { style: "currency", currency: "MZN" }) : "—";
+      const fmtDate = (d: Date | string) =>
+        new Date(d).toLocaleDateString("pt-MZ", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+      const itemRows = items.map((item) => `
+        <tr>
+          <td>${item.nomeProduto} <br><small style="color:#64748b">Tam: ${item.tamanho} | Cor: ${item.cor}</small></td>
+          <td style="text-align:center">${item.quantidade}</td>
+          <td style="text-align:right">${fmt(item.precoProduto)}</td>
+          <td style="text-align:right">${fmt((parseFloat(item.precoProduto) * item.quantidade).toString())}</td>
+        </tr>
+      `).join("");
+
+      const html = `
+        <!DOCTYPE html><html lang="pt">
+        <head>
+          <meta charset="UTF-8">
+          <title>Recibo — Pedido #${order.id.slice(0, 8).toUpperCase()}</title>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #1e293b; padding: 40px; background: #fff; max-width: 800px; margin: 0 auto; line-height: 1.5; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; }
+            .header h1 { font-size: 28px; font-weight: 800; letter-spacing: 2px; }
+            .header-info { text-align: right; }
+            .title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+            .details { display: flex; justify-content: space-between; margin-bottom: 30px; background: #f8fafc; padding: 15px; border-radius: 8px; }
+            .details-col p { margin-bottom: 6px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            th { background: #0f172a; color: white; padding: 10px; text-align: left; font-size: 12px; text-transform: uppercase; }
+            td { padding: 12px 10px; border-bottom: 1px solid #e2e8f0; }
+            .totals { width: 300px; margin-left: auto; }
+            .totals-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+            .totals-row.final { font-size: 16px; font-weight: bold; border-bottom: none; border-top: 2px solid #0f172a; padding-top: 12px; }
+            .footer { margin-top: 50px; text-align: center; color: #64748b; font-size: 11px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+            @media print {
+              body { padding: 0; }
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <h1>IDENTICAL</h1>
+              <p style="color: #64748b; margin-top: 4px;">Cultura Urbana Autêntica</p>
+            </div>
+            <div class="header-info">
+              <h2 style="font-size: 24px; color: #64748b; text-transform: uppercase;">Recibo</h2>
+              <p><strong>Nº do Pedido:</strong> #${order.id.slice(0, 8).toUpperCase()}</p>
+              <p><strong>Data:</strong> ${fmtDate(order.createdAt)}</p>
+            </div>
+          </div>
+
+          <div class="details">
+            <div class="details-col">
+              <strong>Faturado a:</strong>
+              <p>${order.nomeCliente}</p>
+              <p>${order.enderecoEntrega}</p>
+              <p>${order.cidadeEntrega}, ${order.provinciaEntrega}</p>
+              <p>${order.emailCliente || ""}</p>
+              <p>${order.telefoneCliente}</p>
+            </div>
+            <div class="details-col" style="text-align:right">
+              <strong>Pagamento:</strong>
+              <p style="text-transform: uppercase">${order.metodoPagamento || "—"}</p>
+              <p><strong>Estado:</strong> <span style="text-transform: uppercase; color: ${order.status === 'cancelado' ? '#dc2626' : (order.status === 'entregue' ? '#16a34a' : '#0f172a')}">${order.status}</span></p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th style="text-align:center">Qtd</th>
+                <th style="text-align:right">Preço Unitário</th>
+                <th style="text-align:right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemRows}
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <div class="totals-row">
+              <span>Subtotal:</span>
+              <span>${fmt(order.subtotal)}</span>
+            </div>
+            ${parseFloat(order.desconto?.toString() || "0") > 0 ? `
+            <div class="totals-row">
+              <span>Desconto:</span>
+              <span style="color: #16a34a;">-${fmt(order.desconto.toString())}</span>
+            </div>
+            ` : ""}
+            <div class="totals-row final">
+              <span>Total Pago:</span>
+              <span>${fmt(order.total)}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p><strong>Obrigado pela sua compra!</strong></p>
+            <p style="margin-top: 8px;">Para questões sobre o envio ou pagamento, contacte o suporte: +258 84 875 5045</p>
+            <p style="margin-top: 15px;">IDENTICAL &copy; ${new Date().getFullYear()} — Todos os direitos reservados.</p>
+          </div>
+          <script>window.onload = () => window.print();</script>
+        </body></html>
+      `;
+
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.send(html);
     } catch (error) {
       next(error);
     }
@@ -475,11 +606,21 @@ export function registerRoutes(app: Express): Server {
   // Update product (admin)
   app.put("/api/admin/products/:id", requireAdmin, async (req, res, next) => {
     try {
+      const body = {
+        ...req.body,
+        collectionId: req.body.collectionId || null,
+        categoryId: req.body.categoryId || null,
+        imagens: Array.isArray(req.body.imagens) ? req.body.imagens : [],
+        tamanhos: Array.isArray(req.body.tamanhos) ? req.body.tamanhos : [],
+        cores: Array.isArray(req.body.cores) ? req.body.cores : [],
+        estoque: req.body.estoque !== undefined ? Number(req.body.estoque) : undefined,
+      };
+
       // Guardar imagens antigas antes de atualizar
       const current = await storage.getProduct(req.params.id);
-      const product = await storage.updateProduct(req.params.id, req.body);
+      const product = await storage.updateProduct(req.params.id, body);
       if (!product) {
-        return res.status(404).send("Produto não encontrado");
+        return res.status(404).json({ message: "Produto não encontrado" });
       }
       // Apagar imagens que foram removidas (existiam antes mas já não existem)
       if (current?.imagens?.length && req.body.imagens) {
@@ -503,9 +644,17 @@ export function registerRoutes(app: Express): Server {
     try {
       // Buscar produto antes de apagar para ter as URLs das imagens
       const product = await storage.getProduct(req.params.id);
-      const deleted = await storage.deleteProduct(req.params.id);
+      let deleted;
+      try {
+        deleted = await storage.deleteProduct(req.params.id);
+      } catch (err: any) {
+        if (err.message === "PRODUTO_COM_PEDIDOS") {
+           return res.status(400).json({ message: "Não é possível eliminar: O produto já possui pedidos associados. Para evitar quebrar o histórico, por favor, edite o produto e desative-o em vez de eliminar." });
+        }
+        throw err;
+      }
       if (!deleted) {
-        return res.status(404).send("Produto não encontrado");
+        return res.status(404).json({ message: "Produto não encontrado" });
       }
       // Apagar imagens do Cloudinary/local (best-effort)
       if (product?.imagens?.length) {

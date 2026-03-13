@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "wouter";
-import { CheckCircle2, Clock, Package, Truck, XCircle, ChevronLeft, ShoppingBag } from "lucide-react";
+import { CheckCircle2, Clock, Package, Truck, XCircle, ChevronLeft, ShoppingBag, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -214,6 +214,17 @@ export default function OrderStatusPage() {
                                         <div className="flex justify-between font-bold text-base sm:text-lg pt-2 border-t">
                                             <span>Total</span>
                                             <span className="text-primary">{fmt(order.total)}</span>
+                                        </div>
+                                        <div className="pt-4 flex justify-end">
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                className="w-full sm:w-auto font-semibold shadow-sm border-2" 
+                                                onClick={() => window.open(`/api/orders/${order.id}/receipt`, '_blank')}
+                                            >
+                                                <Download className="h-4 w-4 mr-2" />
+                                                Baixar Recibo PDF
+                                            </Button>
                                         </div>
                                     </div>
                                 </CardContent>
