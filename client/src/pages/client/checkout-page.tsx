@@ -17,7 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { ChevronDown, CheckCircle2, Upload, FileImage, FileText, X, Phone, Copy, Check } from "lucide-react";
 
@@ -102,6 +102,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [, setLocation] = useLocation();
 
   const handleCopyNumber = (number: string) => {
     navigator.clipboard.writeText(number).then(() => {
@@ -204,7 +205,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
       });
 
       setTimeout(() => {
-        window.location.href = result.order_url || `/pedido/${result.order?.id}`;
+        setLocation(result.order_url || `/pedido/${result.order?.id}`);
       }, 1500);
     } catch (error: any) {
       const msg = error?.message || "";
@@ -434,11 +435,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                               {copied ? "Copiado!" : "Copiar"}
                             </button>
                           </div>
-                        ) : (
-                          <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-md px-3 py-2 mt-2 border border-amber-200 dark:border-amber-800">
-                            ⚠️ O número de contacto para este método ainda não foi configurado pelo administrador.
-                          </p>
-                        )}
+                        ) : null}
                       </div>
                       <button type="button" className="ml-auto shrink-0 text-xs text-muted-foreground hover:text-foreground underline" onClick={() => setStep(2)}>
                         Alterar

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Menu, X, User } from "lucide-react";
+import { ShoppingBag, Menu, X, User, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +79,13 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
               </Link>
             )}
 
+            {/* Track Order Button */}
+            <Link href="/localizar-pedido">
+              <Button variant="ghost" size="icon" className="relative hidden sm:flex" data-testid="button-track-order" title="Acompanhar Pedido">
+                <Search className="h-5 w-5" />
+              </Button>
+            </Link>
+
             {/* Cart Button */}
             <Button
               variant="ghost"
@@ -120,6 +127,15 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
                       </a>
                     </Link>
                   ))}
+                  <Link href="/localizar-pedido">
+                    <a
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-lg font-semibold uppercase tracking-wider hover-elevate px-4 py-2 rounded-md block text-muted-foreground flex items-center gap-2"
+                      data-testid="mobile-link-track"
+                    >
+                      <Search className="h-4 w-4" /> Localizar Pedido
+                    </a>
+                  </Link>
                   {!user && (
                     <Link href="/auth">
                       <a
