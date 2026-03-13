@@ -195,7 +195,7 @@ export function registerRoutes(app: Express): Server {
         <body>
           <div class="header">
             <div>
-              <h1>ID=NTICAL</h1>
+              <h1>ID<span style="font-size: 1.2em; line-height: 1;">≠</span>NTICAL</h1>
               <p style="color: #64748b; margin-top: 4px;">Cultura Urbana Autêntica</p>
             </div>
             <div class="header-info">
@@ -255,7 +255,7 @@ export function registerRoutes(app: Express): Server {
           <div class="footer">
             <p><strong>Obrigado pela sua compra!</strong></p>
             <p style="margin-top: 8px;">Para questões sobre o envio ou pagamento, contacte o suporte: +258 84 875 5045</p>
-            <p style="margin-top: 15px;">ID=NTICAL &copy; ${new Date().getFullYear()} — Todos os direitos reservados.</p>
+            <p style="margin-top: 15px;">ID<span style="font-size: 1.2em; line-height: 1;">≠</span>NTICAL &copy; ${new Date().getFullYear()} — Todos os direitos reservados.</p>
           </div>
           <script>window.onload = () => window.print();</script>
         </body></html>
