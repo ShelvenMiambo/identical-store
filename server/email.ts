@@ -134,7 +134,7 @@ function getOrderHtml(order: any, items: any[], title: string, subtitle: string)
 export async function enviarEmailConfirmacaoPedido(order: any, items: any[]) {
     if (!process.env.RESEND_API_KEY || !order.emailCliente) return;
     try {
-        await resend.emails.send({
+        const { data, error } = await resend.emails.send({
             from: "ID≠NTICAL Angola <onboarding@resend.dev>",
             to: [order.emailCliente],
             subject: `Confirmação de Encomenda #${order.id.slice(0,8).toUpperCase()} - ID≠NTICAL`,
@@ -145,16 +145,21 @@ export async function enviarEmailConfirmacaoPedido(order: any, items: any[]) {
                 "Obrigado por comprares na ID≠NTICAL. A nossa equipa irá confirmar os detalhes brevemente."
             )
         });
-        console.log(`[EMAIL] Confirmação enviada para o cliente: ${order.emailCliente}`);
+        
+        if (error) {
+            console.error(`[EMAIL] Falha Resend Cliente (${order.emailCliente}):`, error);
+            return;
+        }
+        console.log(`[EMAIL] Confirmação enviada para o cliente: ${order.emailCliente} | ID: ${data?.id}`);
     } catch(err) {
-        console.error("Falha ao enviar e-mail ao cliente:", err);
+        console.error("Falha ao enviar e-mail ao cliente (Network):", err);
     }
 }
 
 export async function enviarEmailNovoAdmin(order: any, items: any[]) {
     if (!process.env.RESEND_API_KEY) return;
     try {
-        await resend.emails.send({
+        const { data, error } = await resend.emails.send({
             from: "ID≠NTICAL Loja <onboarding@resend.dev>",
             to: [ADMIN_EMAIL],
             subject: `[NOVA ENCOMENDA] #${order.id.slice(0,8).toUpperCase()} - ${order.nomeCliente}`,
@@ -165,9 +170,14 @@ export async function enviarEmailNovoAdmin(order: any, items: any[]) {
                 "Um cliente acabou de realizar um pedido. Lê os detalhes abaixo:"
             )
         });
-        console.log(`[EMAIL] Alerta de Nova Encomenda enviada ao Admin: ${ADMIN_EMAIL}`);
+        
+        if (error) {
+            console.error(`[EMAIL] Falha Resend Admin (${ADMIN_EMAIL}):`, error);
+            return;
+        }
+        console.log(`[EMAIL] Alerta de Nova Encomenda enviada ao Admin: ${ADMIN_EMAIL} | ID: ${data?.id}`);
     } catch(err) {
-        console.error("Falha ao enviar e-mail ao Admin:", err);
+        console.error("Falha ao enviar e-mail ao Admin (Network):", err);
     }
 }
 
@@ -179,7 +189,7 @@ export async function enviarEmailComprovanteAdmin(order: any, items: any[], comp
         <a href="${comprovanteUrl}" target="_blank" style="background:#4f46e5; color:#fff; text-decoration:none; padding:10px 15px; border-radius:4px; display:inline-block;">Ver Comprovativo (PDF/Imagem)</a>
         </div>`;
 
-        await resend.emails.send({
+        const { data, error } = await resend.emails.send({
             from: "ID≠NTICAL Loja <onboarding@resend.dev>",
             to: [ADMIN_EMAIL],
             subject: `[COMPROVATIVO RECEBIDO] Encomenda #${order.id.slice(0,8).toUpperCase()}`,
@@ -190,8 +200,13 @@ export async function enviarEmailComprovanteAdmin(order: any, items: any[], comp
                 "O cliente realizou a encomenda e enviou um comprovativo de transferência." + extraHtml
             )
         });
-        console.log(`[EMAIL] Alerta de Comprovativo enviado ao Admin: ${ADMIN_EMAIL}`);
+        
+        if (error) {
+            console.error(`[EMAIL] Falha Resend Admin Comprovativo (${ADMIN_EMAIL}):`, error);
+            return;
+        }
+        console.log(`[EMAIL] Alerta de Comprovativo enviado ao Admin: ${ADMIN_EMAIL} | ID: ${data?.id}`);
     } catch(err) {
-        console.error("Falha ao enviar e-mail ao Admin (comprovante):", err);
+        console.error("Falha ao enviar e-mail ao Admin Comprovativo (Network):", err);
     }
 }
