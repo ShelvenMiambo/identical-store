@@ -4,9 +4,7 @@ import nodemailer from 'nodemailer';
 // Por defeito, pode usar o Gmail, mas precisa de uma App Password.
 // Vamos configurar de forma inteligente: se não houver SMTP_URL ou EMAIL/PASS, não crasha, apenas loga.
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '465'),
-    secure: process.env.SMTP_SECURE !== 'false', // true para 465, false para outras
+    service: 'gmail',
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
