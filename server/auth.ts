@@ -192,9 +192,8 @@ export function setupAuth(app: Express) {
 
     try {
       const user = await storage.getUserByEmail(email);
-      // Sempre retornamos OK, mesmo se não existir, por questões de segurança (evitar enumerar contas)
       if (!user) {
-        return res.json({ message: "Se o email estiver registado, receberás um link de recuperação." });
+        return res.status(404).json({ message: "Modo de Teste: Este email não existe na base de dados!" });
       }
 
       // 1 hora de validade
@@ -208,11 +207,10 @@ export function setupAuth(app: Express) {
       
       const emailSent = await sendPasswordResetEmail(user.email, resetUrl);
       if (!emailSent) {
-          // Se falhou o envio real mas estamos num ambiente dev sem nodemailer config, deixamos passar com um log no servidor
-          console.log(`Fallback: Email de recuperação não foi fisicamente enviado. Link de acesso: ${resetUrl}`);
+          return res.status(500).json({ message: "Modo de Teste: Falhou o envio de email! Verifica o 'Deploy Logs' no Railway para ver o erro exacto." });
       }
 
-      res.json({ message: "Se o email estiver registado, receberás um link de recuperação." });
+      res.json({ message: "Modo de Teste: O Email foi enviado com sucesso!" });
     } catch (err) {
       next(err);
     }
