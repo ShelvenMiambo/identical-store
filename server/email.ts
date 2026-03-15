@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 export async function sendPasswordResetEmail(toEmail: string, resetLink: string) {
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
         console.warn(`[EMAIL MOCK] Email de redefinição para ${toEmail} com link: ${resetLink}`);
-        return true;
+        return { success: true, mocked: true };
     }
 
     try {
@@ -53,9 +53,9 @@ export async function sendPasswordResetEmail(toEmail: string, resetLink: string)
         });
 
         console.log("Email enviado: %s", info.messageId);
-        return true;
-    } catch (error) {
+        return { success: true, mocked: false };
+    } catch (error: any) {
         console.error("Erro ao enviar email de recuperação:", error);
-        return false;
+        return { success: false, error: error.message };
     }
 }

@@ -205,12 +205,16 @@ export function setupAuth(app: Express) {
       // Link para o frontend
       const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${token}`;
       
-      const emailSent = await sendPasswordResetEmail(user.email, resetUrl);
-      if (!emailSent) {
-          return res.status(500).json({ message: "Modo de Teste: Falhou o envio de email! Verifica o 'Deploy Logs' no Railway para ver o erro exacto." });
+      const emailResult = await sendPasswordResetEmail(user.email, resetUrl);
+      if (!emailResult.success) {
+          return res.status(500).json({ message: "Servidor: Falhou o envio de email! Erro: " + emailResult.error });
       }
 
-      res.json({ message: "Modo de Teste: O Email foi enviado com sucesso!" });
+      if (emailResult.mocked) {
+          return res.status(500).json({ message: "Erro de Configuração: As variáveis SMTP_USER e SMTP_PASS não estão configuradas no Railway. (O link gerado foi para o Deploy Log)" });
+      }
+
+      res.json({ message: "O email foi enviado com sucesso! Verifica também o Lixo (Spam)." });
     } catch (err) {
       next(err);
     }
