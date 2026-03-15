@@ -1,4 +1,8 @@
 import nodemailer from 'nodemailer';
+import dns from 'dns';
+
+// Resolver bugs de DNS do Node.js v17+ que dão prioridade a IPv6 no Railway (Causa erros ENETUNREACH)
+dns.setDefaultResultOrder('ipv4first');
 
 // Cria um transportador de email reutilizável usando SMTP.
 // Por defeito, pode usar o Gmail, mas precisa de uma App Password.
