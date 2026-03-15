@@ -5,8 +5,9 @@ import nodemailer from 'nodemailer';
 // Vamos configurar de forma inteligente: se não houver SMTP_URL ou EMAIL/PASS, não crasha, apenas loga.
 const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // true para 465, false para outras
+    port: 587, // Alterado de 465 para 587
+    secure: false, // false para 587
+    requireTLS: true, // Forçar STARTTLS
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
