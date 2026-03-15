@@ -98,8 +98,7 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
     
     setIsForgotLoading(true);
     try {
-      const res = await apiRequest("POST", "/api/forgot-password", { email: forgotEmail });
-      const data = await res.json();
+      const data = await apiRequest("POST", "/api/forgot-password", { email: forgotEmail });
       toast({ title: "Verifica o teu E-mail", description: data.message });
       setForgotDialogOpen(false);
       setForgotEmail("");
