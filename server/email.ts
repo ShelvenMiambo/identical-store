@@ -1,28 +1,5 @@
 import nodemailer from 'nodemailer';
-import dns from 'dns';
-
-// Resolver bugs de DNS do Node.js v17+ que dão prioridade a IPv6 no Railway (Causa erros ENETUNREACH)
-dns.setDefaultResultOrder('ipv4first');
-
-// Cria um transportador de email reutilizável usando SMTP.
-// Por defeito, pode usar o Gmail, mas precisa de uma App Password.
-// Vamos configurar de forma inteligente: se não houver SMTP_URL ou EMAIL/PASS, não crasha, apenas loga.
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587, // Alterado de 465 para 587
-    secure: false, // false para 587
-    requireTLS: true, // Forçar STARTTLS
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-    // Forçar resolução IPv4 para evitar falhas ENETUNREACH no Railway/Vercel (Node 17+ prefere IPv6)
-    family: 4, 
-    // Adding timeout and connection timeout to prevent hanging UI
-    connectionTimeout: 10000, 
-    greetingTimeout: 5000,
-    socketTimeout: 10000,
-} as any);
+import dns from 'dns/promises';
 
 export async function sendPasswordResetEmail(toEmail: string, resetLink: string) {
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
@@ -31,6 +8,28 @@ export async function sendPasswordResetEmail(toEmail: string, resetLink: string)
     }
 
     try {
+        // Resolver ativamente o IP v4 da Google e impedir que o Node faça fallback para IPv6 no Railway
+        const ipv4Records = await dns.resolve4('smtp.gmail.com');
+        const googleIPv4 = ipv4Records[0];
+        console.log(`[EMAIL] A usar IPv4 explícito para a Google: ${googleIPv4}`);
+
+        const transporter = nodemailer.createTransport({
+            host: googleIPv4,
+            port: 465, // Voltar a usar 465 (SSL fechado de ponta a ponta)
+            secure: true,
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS,
+            },
+            tls: {
+                // Muito importante: Dizer ao Google que a Firewall/Certificado é para smtp.gmail.com
+                // Apesar de estarmos a bater à porta via IP numérico
+                servername: 'smtp.gmail.com'
+            },
+            connectionTimeout: 15000, 
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
+        });
         const info = await transporter.sendMail({
             from: `"ID≠NTICAL Angola" <${process.env.SMTP_USER}>`, // email do remetente
             to: toEmail,
