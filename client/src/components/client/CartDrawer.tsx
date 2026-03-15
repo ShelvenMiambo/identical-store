@@ -70,18 +70,6 @@ export function CartDrawer({
                 Explorar Produtos
               </Button>
               
-              <div className="mt-8 pt-8 border-t w-full flex flex-col items-center">
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3 font-semibold">Procuras uma encomenda?</p>
-                {user ? (
-                   <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleNavigate('/conta')}>
-                     <PackageSearch className="h-4 w-4" /> Ver os meus pedidos
-                   </Button>
-                ) : (
-                   <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => handleNavigate('/localizar-pedido')}>
-                     <PackageSearch className="h-4 w-4" /> Acompanhar Pedido (ID)
-                   </Button>
-                )}
-              </div>
             </div>
           ) : (
             <div className="space-y-6">
@@ -191,16 +179,6 @@ export function CartDrawer({
                     data-testid="button-checkout"
                   >
                     Finalizar Compra
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-xs font-semibold uppercase tracking-wider gap-2 text-muted-foreground"
-                    onClick={() => handleNavigate('/conta')}
-                  >
-                    <PackageSearch className="h-3.5 w-3.5" />
-                    Acompanhar Pedidos Recentes
                   </Button>
                 </div>
               ) : (

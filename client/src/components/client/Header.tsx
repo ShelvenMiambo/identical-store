@@ -86,13 +86,6 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
               </Link>
             )}
 
-            {/* Track Order Button */}
-            <Link href="/localizar-pedido">
-              <Button variant="ghost" size="icon" className="relative hidden sm:flex" data-testid="button-track-order" title="Acompanhar Pedido">
-                <Search className="h-5 w-5" />
-              </Button>
-            </Link>
-
             {/* Cart Button */}
             <Button
               variant="ghost"
@@ -133,13 +126,6 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
                       {item.label}
                     </button>
                   ))}
-                  <button
-                    onClick={() => handleMobileNavigate('/localizar-pedido')}
-                    className="text-left text-lg font-semibold uppercase tracking-wider hover-elevate px-4 py-2 rounded-md block text-muted-foreground flex items-center gap-2"
-                    data-testid="mobile-link-track"
-                  >
-                    <Search className="h-4 w-4" /> Localizar Pedido
-                  </button>
                   {!user && (
                     <button
                       onClick={() => handleMobileNavigate('/auth')}

@@ -86,11 +86,7 @@ export function Footer() {
                 <Link href="/colecoes">
                   <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-colecoes">Coleções</a>
                 </Link>
-                <Link href="/localizar-pedido">
-                  <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-track">🔎 Localizar Pedido</a>
-                </Link>
-                <Link href="/faq">
-                  <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-faq">FAQ</a>
+                <Link href="/faq">                  <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-faq">FAQ</a>
                 </Link>
                 <Link href="/guia-tamanhos">
                   <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="footer-link-guia-tamanhos">📏 Guia de Tamanhos</a>

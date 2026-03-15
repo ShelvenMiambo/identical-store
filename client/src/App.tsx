@@ -27,8 +27,6 @@ import PrivacyPage from "@/pages/client/privacy-page";
 import TermsPage from "@/pages/client/terms-page";
 import OrderStatusPage from "@/pages/client/order-status-page";
 import SizeGuidePage from "@/pages/client/size-guide-page";
-import TrackOrderPage from "@/pages/client/track-order-page";
-
 
 // Pages - Admin
 import DashboardPage from "@/pages/admin/dashboard-page";
@@ -90,7 +88,6 @@ function ClientRouter({
       <Route path="/termos" component={TermsPage} />
       <Route path="/pedido/:id" component={OrderStatusPage} />
       <Route path="/guia-tamanhos" component={SizeGuidePage} />
-      <Route path="/localizar-pedido" component={TrackOrderPage} />
       <Route component={NotFound} />
 
     </Switch>

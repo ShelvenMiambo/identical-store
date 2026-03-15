@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Package, User as UserIcon, LogOut, ShoppingBag, Eye, EyeOff, Lock, CheckCircle2 } from "lucide-react";
+import { Package, User as UserIcon, LogOut, ShoppingBag, Eye, EyeOff, Lock, CheckCircle2, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { Input } from "@/components/ui/input";
@@ -114,7 +114,7 @@ export default function UserAccountPage({ user, onLogout }: UserAccountPageProps
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {orders.map((order) => {
                   const totalFormatado = new Intl.NumberFormat("pt-MZ", {
                     style: "currency",
@@ -122,41 +122,51 @@ export default function UserAccountPage({ user, onLogout }: UserAccountPageProps
                   }).format(parseFloat(order.total));
 
                   return (
-                    <Card key={order.id} className="overflow-hidden" data-testid={`order-card-${order.id}`}>
-                      {/* Header do cartão */}
-                      <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b">
-                        <div>
-                          <p className="font-bold text-sm">Pedido #{order.id.slice(0, 8).toUpperCase()}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(order.createdAt)}</p>
-                        </div>
-                        <Badge variant={getStatusColor(order.status)} className="uppercase text-xs">
-                          {getStatusLabel(order.status)}
-                        </Badge>
-                      </div>
+                    <Link href={`/pedido/${order.id}`} key={order.id}>
+                      <a className="block group">
+                        <Card className="overflow-hidden transition-all duration-300 hover:shadow-md hover:border-primary/40 group-hover:-translate-y-0.5" data-testid={`order-card-${order.id}`}>
+                          {/* Header do cartão */}
+                          <div className="flex items-center justify-between px-4 py-3 bg-muted/20 border-b group-hover:bg-primary/5 transition-colors">
+                            <div>
+                              <p className="font-bold text-[13px] sm:text-sm text-foreground">Pedido #{order.id.slice(0, 8).toUpperCase()}</p>
+                              <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">{formatDate(order.createdAt)}</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1.5">
+                              <Badge variant={getStatusColor(order.status)} className="uppercase text-[9px] sm:text-[10px] px-2 py-0.5 leading-tight tracking-wider">
+                                {getStatusLabel(order.status)}
+                              </Badge>
+                              <span className="text-[10px] sm:text-xs font-semibold text-primary flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                Ver progresso <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5" />
+                              </span>
+                            </div>
+                          </div>
 
-                      <CardContent className="px-4 py-3 space-y-3">
-                        <div className="flex justify-between items-start text-sm">
-                          <div className="flex-1 min-w-0 pr-4">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Entrega</p>
-                            <p className="text-sm leading-tight">
-                              {order.enderecoEntrega}<br />
-                              {order.cidadeEntrega}, {order.provinciaEntrega}
-                            </p>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Total</p>
-                            <p className="font-bold text-base">{totalFormatado}</p>
-                          </div>
-                        </div>
+                          <CardContent className="px-4 py-4 space-y-3">
+                            <div className="flex justify-between items-start text-sm">
+                              <div className="flex-1 min-w-0 pr-4">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Local de Entrega</p>
+                                <p className="text-xs sm:text-sm leading-snug">
+                                  <span className="font-medium text-foreground">{order.enderecoEntrega}</span><br />
+                                  <span className="text-muted-foreground">{order.cidadeEntrega}{order.cidadeEntrega ? ", " : ""}{order.provinciaEntrega}</span>
+                                </p>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Total</p>
+                                <p className="font-bold text-sm sm:text-base text-foreground">{totalFormatado}</p>
+                              </div>
+                            </div>
 
-                        {order.metodoPagamento && (
-                          <div className="pt-1 border-t text-xs text-muted-foreground flex items-center gap-1">
-                            <span className="font-semibold">Pagamento:</span>
-                            <span className="uppercase">{order.metodoPagamento}</span>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
+                            {order.metodoPagamento && (
+                              <div className="pt-3 mt-1 border-t border-border/50 text-[11px] sm:text-xs text-muted-foreground flex items-center justify-between group-hover:border-primary/20 transition-colors">
+                                <span className="flex items-center gap-1.5">
+                                  💳 <span className="font-medium">Pagamento:</span> <span className="uppercase text-foreground">{order.metodoPagamento}</span>
+                                </span>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </a>
+                    </Link>
                   );
                 })}
               </div>
