@@ -1,38 +1,24 @@
-import nodemailer from 'nodemailer';
-import dns from 'dns/promises';
+import { Resend } from 'resend';
+
+// Inicializar Resend com a chave API (visível na tua print screen do Railway!)
+// Esta é a ÚNICA maneira de contornar os bloqueios rigorosos de SMTP (portas 465/587)
+// que plataformas Cloud como Railway impõem para prevenir SPAM. O Resend funciona via porta HTTPS 443!
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendPasswordResetEmail(toEmail: string, resetLink: string) {
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-        console.warn(`[EMAIL MOCK] Email de redefinição para ${toEmail} com link: ${resetLink}`);
+    if (!process.env.RESEND_API_KEY) {
+        console.warn(`[EMAIL MOCK] Faltam credenciais. Email para ${toEmail} com link: ${resetLink}`);
         return { success: true, mocked: true };
     }
 
     try {
-        // Resolver ativamente o IP v4 da Google e impedir que o Node faça fallback para IPv6 no Railway
-        const ipv4Records = await dns.resolve4('smtp.gmail.com');
-        const googleIPv4 = ipv4Records[0];
-        console.log(`[EMAIL] A usar IPv4 explícito para a Google: ${googleIPv4}`);
+        console.log(`[EMAIL] A usar Resend API (HTTP 443) para contornar firewall SMTP. Destinatário: ${toEmail}`);
 
-        const transporter = nodemailer.createTransport({
-            host: googleIPv4,
-            port: 465, // Voltar a usar 465 (SSL fechado de ponta a ponta)
-            secure: true,
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-            tls: {
-                // Muito importante: Dizer ao Google que a Firewall/Certificado é para smtp.gmail.com
-                // Apesar de estarmos a bater à porta via IP numérico
-                servername: 'smtp.gmail.com'
-            },
-            connectionTimeout: 15000, 
-            greetingTimeout: 10000,
-            socketTimeout: 15000,
-        });
-        const info = await transporter.sendMail({
-            from: `"ID≠NTICAL Angola" <${process.env.SMTP_USER}>`, // email do remetente
-            to: toEmail,
+        const { data, error } = await resend.emails.send({
+            // Se tiveres um domínio verificado no Resend, coloca-o aqui (ex: 'suporte@oteudominio.com')
+            // Por defeito usaremos a funcionalidade de teste do Resend (onboarding@resend.dev) se necessário
+            from: "ID≠NTICAL Angola <onboarding@resend.dev>",
+            to: [toEmail],
             subject: "Recuperação de Password - ID≠NTICAL",
             html: `
                 <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; color: #333;">
@@ -64,10 +50,15 @@ export async function sendPasswordResetEmail(toEmail: string, resetLink: string)
             `,
         });
 
-        console.log("Email enviado: %s", info.messageId);
+        if (error) {
+            console.error("Erro interno do Resend:", error);
+            return { success: false, error: error.message };
+        }
+
+        console.log("Email enviado via HTTPS com sucesso! ID do Resend: %s", data?.id);
         return { success: true, mocked: false };
     } catch (error: any) {
-        console.error("Erro ao enviar email de recuperação:", error);
+        console.error("Erro drástico ao contactar a API:", error);
         return { success: false, error: error.message };
     }
 }
