@@ -37,7 +37,7 @@ export default function AboutPage() {
         <div className="absolute inset-0 z-0">
           <img
             src={heroImage}
-            alt="IDENTICAL - Sobre nós"
+            alt="ID≠NTICAL - Sobre nós"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70"></div>
@@ -45,7 +45,7 @@ export default function AboutPage() {
 
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <h1 className="text-3xl md:text-6xl font-bold text-white mb-3 uppercase tracking-tight">
-            Sobre a IDENTICAL
+            Sobre a ID≠NTICAL
           </h1>
           <p className="text-base md:text-xl text-white/90 italic">
             "Be Different, Be Classic"
@@ -62,7 +62,7 @@ export default function AboutPage() {
             </h2>
             <div className="space-y-4 text-base md:text-lg text-muted-foreground leading-relaxed">
               <p>
-                A IDENTICAL nasceu das ruas de Maputo, onde a cultura urbana pulsa com energia,
+                A ID≠NTICAL nasceu das ruas de Maputo, onde a cultura urbana pulsa com energia,
                 criatividade e autenticidade. Somos mais do que uma marca de streetwear - somos
                 uma celebração da identidade moçambicana moderna.
               </p>
@@ -140,7 +140,7 @@ export default function AboutPage() {
             Junte-se ao Movimento
           </h2>
           <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Seja parte da comunidade IDENTICAL. Vista-se com propósito. Vista-se com identidade.
+            Seja parte da comunidade ID≠NTICAL. Vista-se com propósito. Vista-se com identidade.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="/loja" className="w-full sm:w-auto">

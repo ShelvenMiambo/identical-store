@@ -343,7 +343,7 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
       <div className="hidden md:block relative overflow-hidden">
         <img
           src={heroImage}
-          alt="IDENTICAL Streetwear"
+          alt="ID≠NTICAL Streetwear"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent" />
@@ -353,7 +353,7 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
               Cultura Urbana<br />Autêntica
             </h2>
             <p className="text-lg text-white/90">
-              Junte-se à comunidade IDENTICAL e explore coleções que celebram a identidade
+              Junte-se à comunidade ID≠NTICAL e explore coleções que celebram a identidade
               moçambicana.
             </p>
             <ul className="space-y-3 text-white/80 text-lg">

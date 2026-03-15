@@ -13,7 +13,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-bold mb-4">1. Introdução</h2>
             <p className="text-muted-foreground leading-relaxed">
-              A IDENTICAL valoriza a sua privacidade. Esta Política de Privacidade explica como
+              A ID≠NTICAL valoriza a sua privacidade. Esta Política de Privacidade explica como
               coletamos, usamos, divulgamos e protegemos as suas informações pessoais quando você
               usa o nosso website e serviços.
             </p>

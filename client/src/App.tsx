@@ -254,7 +254,7 @@ function AppContent() {
       await refetchUser();
       toast({
         title: "Conta criada com sucesso!",
-        description: "Bem-vindo à IDENTICAL!",
+        description: "Bem-vindo à ID≠NTICAL!",
       });
       navigate("/conta");
     } catch (error: any) {

@@ -37,7 +37,7 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p className="text-slate-600 dark:text-slate-400">
-          Visão geral e gestão da loja IDENTICAL
+          Visão geral e gestão da loja ID≠NTICAL
         </p>
       </div>
 

@@ -48,7 +48,7 @@ export default function OrderStatusPage() {
                 icon: <Clock className="h-7 w-7 sm:h-8 sm:w-8 text-yellow-500" />,
                 label: "Aguardando Verificação",
                 color: "bg-yellow-500/10 text-yellow-700 border-yellow-300 dark:text-yellow-300 dark:border-yellow-700",
-                description: "O teu pedido foi recebido! A equipa IDENTICAL irá verificar o comprovativo de pagamento e confirmar em breve.",
+                description: "O teu pedido foi recebido! A equipa ID≠NTICAL irá verificar o comprovativo de pagamento e confirmar em breve.",
                 step: 1,
             };
             case "confirmado": return {
@@ -69,7 +69,7 @@ export default function OrderStatusPage() {
                 icon: <Package className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />,
                 label: "Entregue ✅",
                 color: "bg-primary/10 text-primary border-primary/30",
-                description: "Pedido entregue com sucesso. Obrigado por escolheres a IDENTICAL! 🎉",
+                description: "Pedido entregue com sucesso. Obrigado por escolheres a ID≠NTICAL! 🎉",
                 step: 4,
             };
             case "cancelado": return {
@@ -264,7 +264,7 @@ export default function OrderStatusPage() {
                                     <CardContent className="pt-4 px-4 sm:px-6 pb-4">
                                         <h4 className="font-semibold text-sm text-green-800 dark:text-green-300 mb-1">✅ Comprovativo Enviado</h4>
                                         <p className="text-xs text-muted-foreground mb-2">
-                                            A equipa IDENTICAL está a verificar o teu pagamento.
+                                            A equipa ID≠NTICAL está a verificar o teu pagamento.
                                         </p>
                                         <a href={order.comprovanteUrl} target="_blank" rel="noopener noreferrer"
                                             className="text-xs text-primary font-medium hover:underline">

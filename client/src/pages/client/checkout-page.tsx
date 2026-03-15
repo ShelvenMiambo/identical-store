@@ -201,7 +201,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
       const metodo = PAYMENT_METHODS.find(m => m.id === selectedPayment)?.label ?? selectedPayment;
       toast({
         title: "✅ Pedido enviado com sucesso!",
-        description: `Comprovativo ${comprovanteUrl ? "enviado" : "não anexado"}. A equipa IDENTICAL irá verificar o pagamento ${metodo} e confirmar o pedido.`,
+        description: `Comprovativo ${comprovanteUrl ? "enviado" : "não anexado"}. A equipa ID≠NTICAL irá verificar o pagamento ${metodo} e confirmar o pedido.`,
       });
 
       setTimeout(() => {

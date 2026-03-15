@@ -13,7 +13,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-bold mb-4">1. Aceitação dos Termos</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Ao aceder e usar o website da IDENTICAL, você concorda em cumprir e estar vinculado
+              Ao aceder e usar o website da ID≠NTICAL, você concorda em cumprir e estar vinculado
               a estes Termos e Condições. Se não concordar com qualquer parte destes termos,
               não deve usar o nosso website.
             </p>
@@ -37,7 +37,7 @@ export default function TermsPage() {
             <h2 className="text-2xl font-bold mb-4">3. Processo de Compra</h2>
             <p className="text-muted-foreground leading-relaxed">
               Ao fazer um pedido, você declara que todas as informações fornecidas são
-              verdadeiras e corretas. A confirmação do pedido será enviada por email. A IDENTICAL
+              verdadeiras e corretas. A confirmação do pedido será enviada por email. A ID≠NTICAL
               reserva-se o direito de recusar ou cancelar pedidos por razões incluindo, mas não
               limitadas a, disponibilidade de produto, erros de preço ou suspeita de fraude.
             </p>
@@ -48,7 +48,7 @@ export default function TermsPage() {
             <p className="text-muted-foreground leading-relaxed">
               Os pagamentos são processados através da PaySuite. Aceitamos M-Pesa, e-Mola e
               cartões de crédito/débito. Todos os pagamentos devem ser efetuados no momento
-              da compra. A IDENTICAL não armazena informações de cartão de crédito.
+              da compra. A ID≠NTICAL não armazena informações de cartão de crédito.
             </p>
           </section>
 
@@ -62,7 +62,7 @@ export default function TermsPage() {
               <li>Outras províncias: 5-7 dias úteis</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
-              Os prazos são estimativas e podem variar. A IDENTICAL não se responsabiliza por
+              Os prazos são estimativas e podem variar. A ID≠NTICAL não se responsabiliza por
               atrasos causados por transportadoras ou circunstâncias fora do nosso controle.
             </p>
           </section>
@@ -87,7 +87,7 @@ export default function TermsPage() {
             <h2 className="text-2xl font-bold mb-4">7. Propriedade Intelectual</h2>
             <p className="text-muted-foreground leading-relaxed">
               Todo o conteúdo do site, incluindo textos, gráficos, logos, imagens e software,
-              é propriedade da IDENTICAL e está protegido por leis de direitos autorais. É
+              é propriedade da ID≠NTICAL e está protegido por leis de direitos autorais. É
               proibida a reprodução, distribuição ou uso não autorizado.
             </p>
           </section>
@@ -95,7 +95,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-2xl font-bold mb-4">8. Limitação de Responsabilidade</h2>
             <p className="text-muted-foreground leading-relaxed">
-              A IDENTICAL não será responsável por danos indiretos, incidentais ou
+              A ID≠NTICAL não será responsável por danos indiretos, incidentais ou
               consequenciais resultantes do uso ou impossibilidade de usar os nossos produtos
               ou serviços. A nossa responsabilidade está limitada ao valor do produto adquirido.
             </p>

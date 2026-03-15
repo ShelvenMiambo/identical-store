@@ -63,7 +63,7 @@ export default function HomePage() {
             <img
               key={src}
               src={src}
-              alt={`IDENTICAL Slide ${index + 1}`}
+              alt={`ID≠NTICAL Slide ${index + 1}`}
               className="absolute inset-0 w-full h-full object-cover"
               style={{
                 opacity: index === currentSlide ? 1 : 0,
@@ -206,7 +206,7 @@ export default function HomePage() {
             <div className="relative aspect-square rounded-lg overflow-hidden">
               <img
                 src={heroImage2}
-                alt="Sobre IDENTICAL"
+                alt="Sobre ID≠NTICAL"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -214,7 +214,7 @@ export default function HomePage() {
             {/* Content */}
             <div className="space-y-6">
               <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight mb-3">
-                Sobre a IDENTICAL
+                Sobre a ID≠NTICAL
               </h2>
               <div className="space-y-4 text-muted-foreground leading-relaxed">
                 <p>
@@ -245,7 +245,7 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-4xl font-bold uppercase tracking-tight mb-3">
-            #IDENTICAL
+            #ID≠NTICAL
           </h2>
           <p className="text-muted-foreground">
             Junte-se à nossa comunidade urbana
@@ -263,7 +263,7 @@ export default function HomePage() {
               key={index}
               className="aspect-square rounded-md overflow-hidden hover-elevate active-elevate-2 cursor-pointer"
             >
-              <img src={img} alt={`IDENTICAL ${index + 1}`} className="w-full h-full object-cover" />
+              <img src={img} alt={`ID≠NTICAL ${index + 1}`} className="w-full h-full object-cover" />
             </div>
           ))}
         </div>
