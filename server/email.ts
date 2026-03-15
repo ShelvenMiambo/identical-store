@@ -4,16 +4,20 @@ import nodemailer from 'nodemailer';
 // Por defeito, pode usar o Gmail, mas precisa de uma App Password.
 // Vamos configurar de forma inteligente: se não houver SMTP_URL ou EMAIL/PASS, não crasha, apenas loga.
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // true para 465, false para outras
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
+    // Forçar resolução IPv4 para evitar falhas ENETUNREACH no Railway/Vercel (Node 17+ prefere IPv6)
+    family: 4, 
     // Adding timeout and connection timeout to prevent hanging UI
     connectionTimeout: 10000, 
     greetingTimeout: 5000,
     socketTimeout: 10000,
-});
+} as any);
 
 export async function sendPasswordResetEmail(toEmail: string, resetLink: string) {
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
