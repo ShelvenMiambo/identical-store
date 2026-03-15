@@ -11,7 +11,7 @@ import {
     type Coupon, type InsertCoupon,
     type OrderHistoryRow,
 } from '@shared/schema';
-import { eq, desc, sql, or } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import type { Store } from 'express-session';
@@ -246,15 +246,8 @@ export class PostgresStorage implements IStorage {
     }
 
     async getOrdersByUser(userId: string): Promise<Order[]> {
-        const user = await this.getUser(userId);
-        if (!user) return [];
         return db.select().from(orders)
-            .where(
-                or(
-                    eq(orders.userId, userId),
-                    user.email ? eq(orders.emailCliente, user.email) : sql`false`
-                )
-            )
+            .where(eq(orders.userId, userId))
             .orderBy(desc(orders.createdAt));
     }
 

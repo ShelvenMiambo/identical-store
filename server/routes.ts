@@ -308,12 +308,9 @@ export function registerRoutes(app: Express): Server {
 
       const total = subtotal - desconto;
 
-      // Extract explicitly passed userId from body as a fallback
-      const checkoutUserId = req.body.userId || null;
-
       // Create order (includes metodoPagamento + comprovanteUrl from body)
       const order = await storage.createOrder({
-        userId: req.user?.id || checkoutUserId,
+        userId: req.user?.id || null,
         status: "pendente",
         subtotal: subtotal.toFixed(2),
         desconto: desconto.toFixed(2),
