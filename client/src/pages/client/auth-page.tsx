@@ -14,8 +14,18 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Eye, EyeOff } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Eye, EyeOff, Mail } from "lucide-react";
 import { Redirect } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import heroImage from "@assets/IMG-20251110-WA0110_1763061428733.jpg";
 
 const loginSchema = z.object({
@@ -44,6 +54,12 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginPw, setShowLoginPw] = useState(false);
   const [showRegisterPw, setShowRegisterPw] = useState(false);
+  
+  // Forgot password state
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
+  const [forgotDialogOpen, setForgotDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -70,6 +86,27 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
       if (onRegister) await onRegister(data);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotEmail) {
+      toast({ title: "Erro", description: "Insere o teu email.", variant: "destructive" });
+      return;
+    }
+    
+    setIsForgotLoading(true);
+    try {
+      const res = await apiRequest("POST", "/api/forgot-password", { email: forgotEmail });
+      const data = await res.json();
+      toast({ title: "Verifica o teu E-mail", description: data.message });
+      setForgotDialogOpen(false);
+      setForgotEmail("");
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message || "Falha ao processar pedido.", variant: "destructive" });
+    } finally {
+      setIsForgotLoading(false);
     }
   };
 
@@ -173,23 +210,54 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                         {isLoading ? "A entrar..." : "Entrar"}
                       </Button>
 
-                      {/* Esqueci a password → WhatsApp do admin */}
+                      {/* Esqueci a password → Dialog Modal */}
                       <div className="text-center pt-1">
-                        <a
-                          href={(() => {
-                            const username = loginForm.getValues("username");
-                            const msg = username
-                              ? `Olá, esqueci a minha password. O meu username é: *${username}*. Podem ajudar-me a recuperar o acesso?`
-                              : `Olá, esqueci a minha password da loja ID≠NTICAL. Podem ajudar-me a recuperar o acesso?`;
-                            return `https://wa.me/258848755045?text=${encodeURIComponent(msg)}`;
-                          })()}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
-                          data-testid="link-forgot-password"
-                        >
-                          Esqueci a password
-                        </a>
+                        <Dialog open={forgotDialogOpen} onOpenChange={setForgotDialogOpen}>
+                          <DialogTrigger asChild>
+                            <button
+                              type="button"
+                              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline-offset-4 hover:underline"
+                              data-testid="link-forgot-password"
+                            >
+                              Esqueci a password
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Recuperar Password</DialogTitle>
+                              <DialogDescription>
+                                Insere o e-mail associado à tua conta. Iremos enviar-te um link seguro para criares uma nova password.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex items-center space-x-2 pt-4">
+                              <div className="grid flex-1 gap-2">
+                                <FormLabel htmlFor="forgot-email" className="sr-only">
+                                  Email
+                                </FormLabel>
+                                <div className="relative">
+                                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    id="forgot-email"
+                                    type="email"
+                                    placeholder="O teu email"
+                                    value={forgotEmail}
+                                    onChange={(e) => setForgotEmail(e.target.value)}
+                                    className="pl-10 h-10"
+                                    autoComplete="email"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <Button 
+                              type="button" 
+                              onClick={handleForgotPassword} 
+                              disabled={isForgotLoading || !forgotEmail}
+                              className="w-full mt-4"
+                            >
+                              {isForgotLoading ? "A enviar..." : "Enviar link de recuperação"}
+                            </Button>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </form>
                   </Form>

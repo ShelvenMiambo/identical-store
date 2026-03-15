@@ -7,6 +7,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { sendPasswordResetEmail } from "./email";
 
 declare global {
   namespace Express {
@@ -177,6 +178,68 @@ export function setupAuth(app: Express) {
       await storage.updateUser(user.id, { password: hashed } as any);
 
       res.json({ message: "Password alterada com sucesso." });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── Recuperar password (Forgot) ───────────────────────────────────
+  app.post("/api/forgot-password", async (req, res, next) => {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email é obrigatório." });
+    }
+
+    try {
+      const user = await storage.getUserByEmail(email);
+      // Sempre retornamos OK, mesmo se não existir, por questões de segurança (evitar enumerar contas)
+      if (!user) {
+        return res.json({ message: "Se o email estiver registado, receberás um link de recuperação." });
+      }
+
+      // 1 hora de validade
+      const token = randomBytes(32).toString("hex");
+      const expiry = new Date(Date.now() + 60 * 60 * 1000); 
+
+      await storage.setResetToken(user.id, token, expiry);
+
+      // Link para o frontend
+      const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${token}`;
+      
+      const emailSent = await sendPasswordResetEmail(user.email, resetUrl);
+      if (!emailSent) {
+          // Se falhou o envio real mas estamos num ambiente dev sem nodemailer config, deixamos passar com um log no servidor
+          console.log(`Fallback: Email de recuperação não foi fisicamente enviado. Link de acesso: ${resetUrl}`);
+      }
+
+      res.json({ message: "Se o email estiver registado, receberás um link de recuperação." });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ── Redefinir password (Reset) ────────────────────────────────────
+  app.post("/api/reset-password", async (req, res, next) => {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: "Dados incompletos." });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "A nova password deve ter pelo menos 6 caracteres." });
+    }
+
+    try {
+      const user = await storage.getUserByResetToken(token);
+      if (!user) {
+        return res.status(400).json({ message: "Link inválido ou expirado. Pede um novo link de recuperação." });
+      }
+
+      const hashed = await hashPassword(newPassword);
+      await storage.updateUser(user.id, { password: hashed } as any);
+      // Apagar o token
+      await storage.setResetToken(user.id, null, null);
+
+      res.json({ message: "A tua password foi redefinida com sucesso." });
     } catch (err) {
       next(err);
     }

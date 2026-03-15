@@ -20,6 +20,7 @@ import ProductPage from "@/pages/client/product-page";
 import CheckoutPage from "@/pages/client/checkout-page";
 import AuthPage from "@/pages/client/auth-page";
 import UserAccountPage from "@/pages/client/user-account-page";
+import ResetPasswordPage from "@/pages/client/reset-password-page";
 import AboutPage from "@/pages/client/about-page";
 import FAQPage from "@/pages/client/faq-page";
 import ContactPage from "@/pages/client/contact-page";
@@ -77,6 +78,9 @@ function ClientRouter({
       </Route>
       <Route path="/auth">
         {() => <AuthPage user={user} onLogin={onLogin} onRegister={onRegister} />}
+      </Route>
+      <Route path="/reset-password">
+         {() => <ResetPasswordPage />}
       </Route>
       <Route path="/conta">
         {() => <UserAccountPage user={user} onLogout={onLogout} />}

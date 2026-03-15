@@ -15,6 +15,8 @@ export const users = pgTable("users", {
   cidade: text("cidade"),
   provincia: text("provincia"),
   isAdmin: boolean("is_admin").default(false).notNull(),
+  resetToken: text("reset_token"),
+  resetTokenExpiry: timestamp("reset_token_expiry"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -22,6 +24,8 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   isAdmin: true,
+  resetToken: true,
+  resetTokenExpiry: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

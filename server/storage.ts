@@ -24,6 +24,8 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
+  setResetToken(id: string, token: string | null, expiry: Date | null): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   makeUserAdmin(username: string): Promise<User | undefined>;
   getUsers(): Promise<User[]>;
@@ -292,6 +294,20 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.resetToken === token && user.resetTokenExpiry && user.resetTokenExpiry > new Date()
+    );
+  }
+
+  async setResetToken(id: string, token: string | null, expiry: Date | null): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    const updated = { ...user, resetToken: token, resetTokenExpiry: expiry };
+    this.users.set(id, updated);
+    return updated;
   }
 
   async makeUserAdmin(username: string): Promise<User | undefined> {

@@ -62,6 +62,23 @@ export class PostgresStorage implements IStorage {
         return result[0];
     }
 
+    async getUserByResetToken(token: string): Promise<User | undefined> {
+        const result = await db.select().from(users).where(eq(users.resetToken, token));
+        const user = result[0];
+        if (user && user.resetTokenExpiry && user.resetTokenExpiry > new Date()) {
+            return user;
+        }
+        return undefined;
+    }
+
+    async setResetToken(id: string, token: string | null, expiry: Date | null): Promise<User | undefined> {
+        const result = await db.update(users)
+            .set({ resetToken: token, resetTokenExpiry: expiry })
+            .where(eq(users.id, id))
+            .returning();
+        return result[0];
+    }
+
     async makeUserAdmin(username: string): Promise<User | undefined> {
         const user = await this.getUserByUsername(username);
         if (!user) return undefined;
