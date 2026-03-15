@@ -16,6 +16,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useCart } from "@/context/cart-context";
+import { useAuth } from "@/hooks/use-auth";
+import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Redirect, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -93,7 +96,10 @@ interface CheckoutPageProps {
   onClearCart?: () => void;
 }
 
-export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPageProps) {
+export default function CheckoutPage({ cartItems: propsCartItems, onClearCart }: CheckoutPageProps) {
+  const { cartItems: contextCartItems, clearCart } = useCart();
+  const { user } = useAuth();
+  const cartItems = propsCartItems || contextCartItems;
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [selectedPayment, setSelectedPayment] = useState<string>("");
@@ -188,6 +194,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
       const data = form.getValues();
       const result = await apiRequest("POST", "/api/checkout", {
         ...data,
+        userId: user?.id,
         items: cartItems,
         total,
         subtotal,
@@ -197,6 +204,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
       });
 
       if (onClearCart) onClearCart();
+      else clearCart();
 
       const metodo = PAYMENT_METHODS.find(m => m.id === selectedPayment)?.label ?? selectedPayment;
       toast({
