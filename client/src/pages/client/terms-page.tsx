@@ -44,43 +44,37 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold mb-4">4. Pagamento</h2>
+            <h2 className="text-2xl font-bold mb-4">4. Política de Pagamento</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Os pagamentos são processados através da PaySuite. Aceitamos M-Pesa, e-Mola e
-              cartões de crédito/débito. Todos os pagamentos devem ser efetuados no momento
-              da compra. A ID≠NTICAL não armazena informações de cartão de crédito.
+              Trabalhamos com uma rigorosa <strong>política de 50% antes</strong>. Para que o seu pedido seja processado e confirmado, é exigido o adiantamento de metade (50%) do valor total da encomenda. Os restantes 50% deverão ser liquidados no momento da entrega do produto.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold mb-4">5. Envio e Entrega</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Prazos de entrega estimados:
+              O nosso compromisso de entrega é rápido e eficiente:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>Maputo e arredores: 3-5 dias úteis</li>
-              <li>Outras províncias: 5-7 dias úteis</li>
+              <li>Após a confirmação do pagamento dos 50% iniciais, <strong>recebes a tua camisete num prazo máximo de até 48 horas</strong>.</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
-              Os prazos são estimativas e podem variar. A ID≠NTICAL não se responsabiliza por
-              atrasos causados por transportadoras ou circunstâncias fora do nosso controle.
+              Os prazos são rigorosamente cumpridos para garantir a melhor experiência. A ID≠NTICAL assegura que terá a sua peça no tempo estipulado.
             </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold mb-4">6. Devoluções e Trocas</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Aceitamos devoluções e trocas em até 14 dias após a entrega, desde que:
+              A fim de manter o nosso padrão de exclusividade e higiene, a nossa política dita que <strong>as trocas não são aceites</strong>.
+            </p>
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              Incentivamos todos os clientes a consultarem cuidadosamente a nossa Tabela de Tamanhos antes de formalizarem a encomenda. Exceções a esta regra (casos extremos de defeitos de fabrico) serão avaliadas pontualmente e apenas se:
             </p>
             <ul className="list-disc list-inside text-muted-foreground space-y-2 ml-4">
-              <li>O produto esteja em condições originais, não usado</li>
-              <li>Todas as etiquetas estejam intactas</li>
-              <li>Tenha o comprovativo de compra</li>
+              <li>O produto estiver nas exatas condições originais, não usado.</li>
+              <li>A reclamação for feita imediatamente no ato ou dia de entrega.</li>
             </ul>
-            <p className="text-muted-foreground leading-relaxed mt-4">
-              Custos de devolução são da responsabilidade do cliente, exceto em caso de produto
-              defeituoso ou erro nosso.
-            </p>
           </section>
 
           <section>

@@ -74,8 +74,8 @@ export function Footer() {
             </a>
           </div>
 
-          {/* ── Col 2: Links Rápidos + Legal — HORIZONTAIS lado a lado ── */}
-          <div className="grid grid-cols-2 gap-6">
+          {/* ── Col 2: Links Rápidos + Legal — VERTICAIS ── */}
+          <div className="flex flex-col gap-8">
             {/* Links Rápidos */}
             <div className="space-y-3">
               <h4 className="font-semibold text-sm uppercase tracking-wider">Links Rápidos</h4>
