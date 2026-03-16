@@ -607,7 +607,10 @@ export function registerRoutes(app: Express): Server {
 
       const product = await storage.createProduct(parsed.data);
       res.status(201).json(product);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === '23505' && error.message?.includes('slug')) {
+         return res.status(400).json({ message: "Já existe um produto com este Slug (URL). Por favor, acrescente um número ou detalhe (ex: yasuke-creme) para o tornar único." });
+      }
       next(error);
     }
   });
@@ -643,7 +646,10 @@ export function registerRoutes(app: Express): Server {
         }
       }
       res.json(product);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === '23505' && error.message?.includes('slug')) {
+         return res.status(400).json({ message: "Já existe um produto com este Slug (URL). Por favor, acrescente um número ou detalhe (ex: yasuke-creme) para o tornar único." });
+      }
       next(error);
     }
   });
