@@ -493,11 +493,13 @@ export class MemStorage implements IStorage {
     return this.orders.get(id);
   }
 
-  async getOrdersByUser(userId: string): Promise<Order[]> {
-    return Array.from(this.orders.values())
-      .filter((order) => order.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
+    async getOrdersByUser(userId: string): Promise<Order[]> {
+        const user = await this.getUser(userId);
+        if (!user) return [];
+        return Array.from(this.orders.values())
+            .filter((order) => order.userId === userId || (user.email && order.emailCliente === user.email))
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
 
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const id = randomUUID();
