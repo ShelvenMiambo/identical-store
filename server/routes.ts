@@ -658,7 +658,16 @@ export function registerRoutes(app: Express): Server {
         deleted = await storage.deleteProduct(req.params.id);
       } catch (err: any) {
         if (err.message === "PRODUTO_COM_PEDIDOS") {
-           return res.status(400).json({ message: "Não é possível eliminar: O produto já possui pedidos associados. Para evitar quebrar o histórico, por favor, edite o produto e desative-o em vez de eliminar." });
+           // Em vez de dar erro porque o histórico partia, fazemos Soft Delete escondido
+           if (product) {
+               await storage.updateProduct(req.params.id, {
+                 nome: "[APAGADO]- " + product.nome,
+                 ativo: false,
+                 destaque: false,
+                 novo: false
+               });
+           }
+           return res.sendStatus(204);
         }
         throw err;
       }

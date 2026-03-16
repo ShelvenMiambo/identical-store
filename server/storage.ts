@@ -341,7 +341,7 @@ export class MemStorage implements IStorage {
 
   // Products
   async getProducts(): Promise<Product[]> {
-    return Array.from(this.products.values());
+    return Array.from(this.products.values()).filter((p) => !p.nome.startsWith("[APAGADO]-"));
   }
 
   async getProduct(id: string): Promise<Product | undefined> {

@@ -11,7 +11,7 @@ import {
     type Coupon, type InsertCoupon,
     type OrderHistoryRow,
 } from '@shared/schema';
-import { eq, desc, sql, or } from 'drizzle-orm';
+import { eq, desc, sql, or, notLike } from 'drizzle-orm';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import type { Store } from 'express-session';
@@ -111,7 +111,10 @@ export class PostgresStorage implements IStorage {
 
     // ===== PRODUCTS =====
     async getProducts(): Promise<Product[]> {
-        return db.select().from(products).orderBy(desc(products.createdAt));
+        return db.select()
+            .from(products)
+            .where(notLike(products.nome, '[APAGADO]-%'))
+            .orderBy(desc(products.createdAt));
     }
 
     async getProduct(id: string): Promise<Product | undefined> {
