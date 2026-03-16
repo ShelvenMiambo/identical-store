@@ -713,7 +713,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                       <div className="space-y-2">
                         <Label>Cores Disponíveis</Label>
                         <div className="flex flex-wrap gap-2">
-                          {["Preto", "Branco", "Cinza", "Azul", "Vermelho"].map((cor) => (
+                          {["Preto", "Branco", "Creme", "Cinza", "Azul", "Vermelho"].map((cor) => (
                             <Button
                               key={cor}
                               type="button"
