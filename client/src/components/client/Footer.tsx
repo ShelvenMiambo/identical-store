@@ -34,8 +34,8 @@ export function Footer() {
     <footer className="bg-card border-t mt-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
 
-        {/* ── Linha principal: 3 colunas em desktop, empilha em mobile ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+        {/* ── Linha principal: 2 colunas em desktop, empilha em mobile ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
 
           {/* ── Col 1: Marca + Redes Sociais ── */}
           <div className="space-y-4">
@@ -111,18 +111,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* ── Col 3: Políticas da Loja ── */}
-          <div className="space-y-4">
-            <h4 className="font-semibold text-sm uppercase tracking-wider text-orange-600 dark:text-orange-400">Políticas da Loja</h4>
-            <div className="space-y-2 text-sm text-muted-foreground border-l-2 border-orange-200 dark:border-orange-800 pl-3">
-              <p>
-                <strong>Só temos uma política:</strong> 50% antes e recebes tua camisete até 48horas no max.
-              </p>
-              <p>
-                <strong>Trocas não são aceites</strong> (apenas casos extremos), por isso disponibilizamos a <Link href="/guia-tamanhos"><a className="underline hover:text-foreground">Tabela de Tamanhos</a></Link>.
-              </p>
-            </div>
-          </div>
+
         </div>
 
         {/* ── Barra inferior ── */}
