@@ -271,7 +271,6 @@ function ChangePasswordSection({ toast }: { toast: any }) {
           type={show ? "text" : "password"}
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
           className="h-11 pr-11"
           data-testid={testId}
           autoComplete="off"
@@ -306,13 +305,13 @@ function ChangePasswordSection({ toast }: { toast: any }) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <PwField label="Password Actual" value={currentPw} onChange={setCurrentPw}
               show={showCurrent} onToggle={() => setShowCurrent(p => !p)}
-              placeholder="Insere a tua password actual" testId="input-current-password" />
+               testId="input-current-password" />
             <PwField label="Nova Password" value={newPw} onChange={setNewPw}
               show={showNew} onToggle={() => setShowNew(p => !p)}
-              placeholder="Mínimo 6 caracteres" testId="input-new-password" />
+               testId="input-new-password" />
             <PwField label="Confirmar Nova Password" value={confirmPw} onChange={setConfirmPw}
               show={showConfirm} onToggle={() => setShowConfirm(p => !p)}
-              placeholder="Repete a nova password" testId="input-confirm-password" />
+               testId="input-confirm-password" />
             <Button type="submit" className="w-full" disabled={isLoading || !currentPw || !newPw || !confirmPw}>
               {isLoading ? "A guardar..." : "Guardar Nova Password"}
             </Button>

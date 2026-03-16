@@ -286,7 +286,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                             Nome Completo <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: João Manuel Silva" {...field} />
+                            <Input {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -298,7 +298,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                               Telefone <span className="text-red-500">*</span>
                             </FormLabel>
                             <FormControl>
-                              <Input type="tel" placeholder="Ex: 84 123 4567" {...field} />
+                              <Input type="tel" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -309,7 +309,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                               Email <span className="text-muted-foreground font-normal normal-case">(opcional)</span>
                             </FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Ex: joao@gmail.com" {...field} />
+                              <Input type="email" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -321,7 +321,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                             Endereço / Bairro <span className="text-red-500">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: Bairro Polana Cimento, perto do mercado X" {...field} />
+                            <Input {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -333,7 +333,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
                               Cidade <span className="text-muted-foreground font-normal normal-case">(opcional)</span>
                             </FormLabel>
                             <FormControl>
-                              <Input placeholder="Ex: Maputo, Matola…" {...field} />
+                              <Input {...field} />
                             </FormControl>
                           </FormItem>
                         )} />

@@ -111,23 +111,17 @@ export function Footer() {
             </div>
           </div>
 
-          {/* ── Col 3: Newsletter ── */}
+          {/* ── Col 3: Políticas da Loja ── */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-sm uppercase tracking-wider">Newsletter</h4>
-            <p className="text-sm text-muted-foreground">
-              Receba novidades sobre lançamentos e ofertas exclusivas.
-            </p>
-            <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
-              <Input
-                type="email"
-                placeholder="Seu email"
-                className="flex-1"
-                data-testid="input-newsletter-email"
-              />
-              <Button type="submit" data-testid="button-newsletter-submit">
-                <Mail className="h-4 w-4" />
-              </Button>
-            </form>
+            <h4 className="font-semibold text-sm uppercase tracking-wider text-orange-600 dark:text-orange-400">Políticas da Loja</h4>
+            <div className="space-y-2 text-sm text-muted-foreground border-l-2 border-orange-200 dark:border-orange-800 pl-3">
+              <p>
+                <strong>Só temos uma política:</strong> 50% antes e recebes tua camisete até 48horas no max.
+              </p>
+              <p>
+                <strong>Trocas não são aceites</strong> (apenas casos extremos), por isso disponibilizamos a <Link href="/guia-tamanhos"><a className="underline hover:text-foreground">Tabela de Tamanhos</a></Link>.
+              </p>
+            </div>
           </div>
         </div>
 

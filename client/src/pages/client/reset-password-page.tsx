@@ -71,7 +71,6 @@ export default function ResetPasswordPage() {
               <div className="relative">
                 <Input
                   type={showPw ? "text" : "password"}
-                  placeholder="Mínimo de 6 caracteres"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="pr-10"

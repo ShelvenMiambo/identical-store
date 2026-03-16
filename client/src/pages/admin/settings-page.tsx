@@ -93,7 +93,6 @@ export default function SettingsAdminPage() {
             <Input
               id="heroTitle"
               value={form.heroTitle}
-              placeholder="Be Different, Be Classic"
               onChange={(e) => setForm({ ...form, heroTitle: e.target.value })}
             />
           </div>
@@ -103,7 +102,6 @@ export default function SettingsAdminPage() {
               id="heroSubtitle"
               rows={3}
               value={form.heroSubtitle}
-              placeholder="Streetwear moçambicano autêntico…"
               onChange={(e) => setForm({ ...form, heroSubtitle: e.target.value })}
             />
           </div>
@@ -142,7 +140,6 @@ export default function SettingsAdminPage() {
           {form.highlights.map((h, idx) => (
             <div key={idx} className="grid md:grid-cols-3 gap-3 p-3 rounded-lg border bg-slate-50 dark:bg-slate-800/30">
               <Input
-                placeholder="Título"
                 value={h.title}
                 onChange={(e) =>
                   setForm({
@@ -154,7 +151,6 @@ export default function SettingsAdminPage() {
                 }
               />
               <Input
-                placeholder="Imagem (URL)"
                 value={h.image ?? ""}
                 onChange={(e) =>
                   setForm({
@@ -167,7 +163,6 @@ export default function SettingsAdminPage() {
               />
               <div className="flex gap-2">
                 <Input
-                  placeholder="Descrição"
                   value={h.description ?? ""}
                   onChange={(e) =>
                     setForm({
@@ -241,7 +236,6 @@ export default function SettingsAdminPage() {
               <Input
                 id={`pc-${key}`}
                 value={form.paymentContacts?.[key] ?? ""}
-                placeholder={placeholder}
                 onChange={(e) =>
                   setForm({
                     ...form,

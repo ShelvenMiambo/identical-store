@@ -663,7 +663,6 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                             id="categoria"
                             value={productForm.categoria}
                             onChange={(e) => setProductForm({ ...productForm, categoria: e.target.value })}
-                            placeholder="Ex: T-Shirts, Hoodies..."
                           />
                         </div>
                         <div className="space-y-2">
@@ -740,8 +739,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                           onChange={(e) =>
                             setProductForm({ ...productForm, imagemPrincipal: e.target.value })
                           }
-                          placeholder="/attached_assets/produto.jpg"
-                        />
+                          />
                       </div>
 
                       <div className="space-y-2">
@@ -755,8 +753,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                             })
                           }
                           rows={4}
-                          placeholder="/attached_assets/produto-1.jpg"
-                        />
+                          />
                       </div>
 
                       <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">

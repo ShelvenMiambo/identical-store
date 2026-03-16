@@ -367,7 +367,6 @@ export default function ProductsPage() {
                             <Input
                                 id="pf-promo"
                                 type="number"
-                                placeholder="Ex: 850 (preço original ficará riscado)"
                                 value={form.precoPromocional}
                                 onChange={(e) => setForm({ ...form, precoPromocional: e.target.value })}
                                 className="border-orange-200 focus:border-orange-400"
@@ -396,7 +395,6 @@ export default function ProductsPage() {
                             <div className="flex gap-2">
                                 <Input
                                     id="pf-col-new"
-                                    placeholder="Criar nova coleção..."
                                     className="h-8 text-xs"
                                     onKeyDown={async (e) => {
                                         if (e.key === 'Enter' && e.currentTarget.value.trim()) {
@@ -444,7 +442,6 @@ export default function ProductsPage() {
                             <div className="flex gap-2">
                                 <Input
                                     id="pf-cat-new"
-                                    placeholder="Criar nova categoria..."
                                     className="h-8 text-xs"
                                     onKeyDown={async (e) => {
                                         if (e.key === 'Enter' && e.currentTarget.value.trim()) {

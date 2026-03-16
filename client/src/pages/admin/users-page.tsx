@@ -380,7 +380,6 @@ export default function UsersPage() {
                             <Input
                                 value={editForm.nome}
                                 onChange={(e) => setEditForm({ ...editForm, nome: e.target.value })}
-                                placeholder="Nome completo"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -389,7 +388,6 @@ export default function UsersPage() {
                                 type="email"
                                 value={editForm.email}
                                 onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                placeholder="email@exemplo.com"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -398,7 +396,6 @@ export default function UsersPage() {
                                 type="password"
                                 value={editForm.password}
                                 onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-                                placeholder="••••••••"
                             />
                         </div>
                         <div className="flex items-center gap-3 p-3 rounded-lg border">

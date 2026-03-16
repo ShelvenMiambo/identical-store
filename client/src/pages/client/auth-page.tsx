@@ -156,7 +156,6 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                             <FormLabel className="font-semibold">Username</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="seu_username"
                                 autoComplete="username"
                                 className="h-12 text-base"
                                 {...field}
@@ -178,7 +177,6 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                               <div className="relative">
                                 <Input
                                   type={showLoginPw ? "text" : "password"}
-                                  placeholder="••••••••"
                                   autoComplete="current-password"
                                   className="h-12 text-base pr-11"
                                   {...field}
@@ -238,7 +236,6 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                                   <Input
                                     id="forgot-email"
                                     type="email"
-                                    placeholder="O teu email"
                                     value={forgotEmail}
                                     onChange={(e) => setForgotEmail(e.target.value)}
                                     className="pl-10 h-10"
@@ -282,7 +279,6 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                             <FormLabel className="font-semibold">Nome Completo</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="João Silva"
                                 autoComplete="name"
                                 className="h-12 text-base"
                                 {...field}
@@ -303,7 +299,6 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                             <FormControl>
                               <Input
                                 type="email"
-                                placeholder="joao@exemplo.com"
                                 autoComplete="email"
                                 className="h-12 text-base"
                                 {...field}
@@ -324,7 +319,6 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                               <FormLabel className="font-semibold">Username</FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="joao123"
                                   autoComplete="username"
                                   className="h-12 text-base"
                                   {...field}
@@ -344,7 +338,6 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                               <FormLabel className="font-semibold">Telefone <span className="font-normal text-muted-foreground">(opc.)</span></FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="+258 84..."
                                   autoComplete="tel"
                                   className="h-12 text-base"
                                   {...field}
@@ -367,7 +360,6 @@ export default function AuthPage({ user, onLogin, onRegister }: AuthPageProps) {
                               <div className="relative">
                                 <Input
                                   type={showRegisterPw ? "text" : "password"}
-                                  placeholder="Mínimo 6 caracteres"
                                   autoComplete="new-password"
                                   className="h-12 text-base pr-11"
                                   {...field}
