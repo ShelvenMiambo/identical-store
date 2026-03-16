@@ -125,9 +125,18 @@ export function registerRoutes(app: Express): Server {
       if (!order) {
         return res.status(404).json({ message: "Pedido não encontrado" });
       }
-      // Authenticated non-admin users can only see their own orders
-      if (req.user && !req.user.isAdmin && order.userId && order.userId !== req.user.id) {
-        return res.sendStatus(403);
+      // Permissions:
+      // 1. Admins can see any order
+      // 2. The user who created the order (userId match) can see it
+      // 3. Any user with the same email as the order email can see it
+      // 4. Guests/Unauthenticated users CAN see orders by UUID (Guest tracking link)
+      // If a user is logged in but isn't admin and doesn't match ID or Email, block it.
+      if (req.user && !req.user.isAdmin) {
+          const isOwner = order.userId === req.user.id;
+          const isSameEmail = order.emailCliente === req.user.email;
+          if (!isOwner && !isSameEmail) {
+             return res.sendStatus(403);
+          }
       }
       // Include order items in the response
       const items = await storage.getOrderItems(order.id);
