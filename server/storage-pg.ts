@@ -25,6 +25,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
     heroSubtitle: 'Streetwear moçambicano autêntico. Raízes urbanas com forte identidade local.',
     banners: [],
     highlights: [],
+    paymentContacts: { mpesa: "", emola: "", mbim: "" },
 };
 
 export class PostgresStorage implements IStorage {
@@ -366,6 +367,7 @@ export class PostgresStorage implements IStorage {
                 heroSubtitle: row.heroSubtitle,
                 banners: Array.isArray(row.banners) ? row.banners : [],
                 highlights: Array.isArray(row.highlights) ? row.highlights as any[] : [],
+                paymentContacts: (row.paymentContacts as Record<string, string>) || { mpesa: "", emola: "", mbim: "" },
             };
         } catch (err: any) {
             console.error('⚠️ [Settings] Erro ao ler da DB, usando padrão:', err.message);
@@ -390,6 +392,7 @@ export class PostgresStorage implements IStorage {
                         image: h.image ?? undefined,
                     }))
                     : current.highlights,
+                paymentContacts: settings.paymentContacts ?? current.paymentContacts,
             };
 
             // Upsert — cria linha se não existir, atualiza se existir
@@ -402,6 +405,7 @@ export class PostgresStorage implements IStorage {
                         heroSubtitle: next.heroSubtitle,
                         banners: next.banners,
                         highlights: next.highlights as any,
+                        paymentContacts: next.paymentContacts as any,
                         updatedAt: new Date(),
                     },
                 });

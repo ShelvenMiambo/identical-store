@@ -94,6 +94,7 @@ export interface SiteSettings {
   heroSubtitle: string;
   banners: string[];
   highlights: { title: string; description?: string; image?: string }[];
+  paymentContacts?: Record<string, string>;
 }
 
 // In-memory storage implementation
@@ -130,6 +131,7 @@ export class MemStorage implements IStorage {
         "/attached_assets/IMG-20251110-WA0104_1763061428739.jpg",
       ],
       highlights: [],
+      paymentContacts: { mpesa: "", emola: "", mbim: "" },
     };
 
     // Initialize with some data
@@ -637,6 +639,7 @@ export class MemStorage implements IStorage {
           image: h.image ?? undefined,
         }))
         : this.siteSettings.highlights,
+      paymentContacts: settings.paymentContacts ?? this.siteSettings.paymentContacts,
     };
     this.siteSettings = next;
     return this.siteSettings;
