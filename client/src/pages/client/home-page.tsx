@@ -50,8 +50,8 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [slides.length]);
 
-  const featuredProducts = products.filter((p) => p.destaque).slice(0, 4);
-  const newProducts = products.filter((p) => p.novo).slice(0, 4);
+  const featuredProducts = products.filter((p) => p.destaque && p.ativo).slice(0, 4);
+  const newProducts = products.filter((p) => p.novo && p.ativo).slice(0, 4);
 
   return (
     <div className="min-h-screen">
