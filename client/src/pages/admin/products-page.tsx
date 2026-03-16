@@ -175,7 +175,7 @@ export default function ProductsPage() {
     };
 
     const fmt = (v: string) =>
-        new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(parseFloat(v));
+        new Intl.NumberFormat("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(v)) + " MZN";
 
     return (
         <div>
@@ -502,7 +502,7 @@ export default function ProductsPage() {
                         <div className="space-y-2">
                             <Label>Cores Disponíveis</Label>
                             <div className="flex flex-wrap gap-2">
-                                {["Preto", "Branco", "Cinza", "Azul", "Vermelho"].map((cor) => (
+                                {["Preto", "Branco", "Creme", "Cinza", "Azul", "Vermelho"].map((cor) => (
                                     <Button
                                         key={cor}
                                         type="button"

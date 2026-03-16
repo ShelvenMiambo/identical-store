@@ -117,9 +117,9 @@ export default function UserAccountPage({ user, onLogout }: UserAccountPageProps
               <div className="space-y-4">
                 {orders.map((order) => {
                   const totalFormatado = new Intl.NumberFormat("pt-MZ", {
-                    style: "currency",
-                    currency: "MZN",
-                  }).format(parseFloat(order.total));
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }).format(parseFloat(order.total)) + " MZN";
 
                   return (
                     <Link href={`/pedido/${order.id}`} key={order.id}>

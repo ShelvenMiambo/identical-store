@@ -72,7 +72,7 @@ export default function OrdersPage() {
         ({ mpesa: "M-Pesa", emola: "e-Mola", mbim: "Conta Bancária (Millennium BIM)" }[m ?? ""] ?? m ?? "—");
 
     const fmt = (v: string) =>
-        new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(parseFloat(v));
+        new Intl.NumberFormat("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(v)) + " MZN";
 
     /* ── Comprovativo inline ── */
     const renderComprovativo = (url?: string | null) => {
@@ -346,7 +346,7 @@ function HistoricoTab() {
     });
 
     const fmtMzn = (v: string | null | undefined) =>
-        v ? parseFloat(v).toLocaleString("pt-MZ", { style: "currency", currency: "MZN" }) : "—";
+        v ? parseFloat(v).toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " MZN" : "—";
 
     const fmtDate = (d: string | Date) =>
         new Date(d).toLocaleDateString("pt-MZ", { day: "2-digit", month: "2-digit", year: "numeric" });

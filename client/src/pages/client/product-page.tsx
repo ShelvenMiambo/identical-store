@@ -84,9 +84,9 @@ export default function ProductPage({ onAddToCart }: ProductPageProps) {
   }
 
   const precoFormatado = new Intl.NumberFormat("pt-MZ", {
-    style: "currency",
-    currency: "MZN",
-  }).format(parseFloat(product.preco));
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(parseFloat(product.preco)) + " MZN";
 
   const handleAddToCart = () => {
     if (!selectedSize) {

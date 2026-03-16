@@ -70,7 +70,7 @@ export async function sendPasswordResetEmail(toEmail: string, resetLink: string)
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "identicaloficialmz@gmail.com";
 
 function getOrderHtml(order: any, items: any[], title: string, subtitle: string) {
-    const formatter = new Intl.NumberFormat('pt-MZ', { style: 'currency', currency: 'MZN' });
+    const formatter = new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     let itemsHtml = items.map(item => `
         <tr>
@@ -79,7 +79,7 @@ function getOrderHtml(order: any, items: any[], title: string, subtitle: string)
                 <small>Tamanho: ${item.tamanho} | Cor: ${item.cor}</small>
             </td>
             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantidade}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatter.format(item.precoProduto)}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${formatter.format(item.precoProduto)} MZN</td>
         </tr>
     `).join('');
 
@@ -114,15 +114,15 @@ function getOrderHtml(order: any, items: any[], title: string, subtitle: string)
                     <tfoot>
                         <tr>
                             <td colspan="2" style="padding: 10px; text-align: right;"><strong>Subtotal:</strong></td>
-                            <td style="padding: 10px; text-align: right;">${formatter.format(order.subtotal)}</td>
+                            <td style="padding: 10px; text-align: right;">${formatter.format(order.subtotal)} MZN</td>
                         </tr>
                         <tr>
                             <td colspan="2" style="padding: 10px; text-align: right;"><strong>Desconto:</strong></td>
-                            <td style="padding: 10px; text-align: right; color: green;">-${formatter.format(order.desconto || 0)}</td>
+                            <td style="padding: 10px; text-align: right; color: green;">-${formatter.format(order.desconto || 0)} MZN</td>
                         </tr>
                         <tr>
                             <td colspan="2" style="padding: 10px; text-align: right;"><strong>Total a Pagar:</strong></td>
-                            <td style="padding: 10px; text-align: right; font-size: 18px;"><strong>${formatter.format(order.total)}</strong></td>
+                            <td style="padding: 10px; text-align: right; font-size: 18px;"><strong>${formatter.format(order.total)} MZN</strong></td>
                         </tr>
                     </tfoot>
                 </table>

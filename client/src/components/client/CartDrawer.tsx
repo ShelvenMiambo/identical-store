@@ -34,9 +34,9 @@ export function CartDrawer({
   );
 
   const subtotalFormatado = new Intl.NumberFormat("pt-MZ", {
-    style: "currency",
-    currency: "MZN",
-  }).format(subtotal);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(subtotal) + " MZN";
 
   const [, setLocation] = useLocation();
 
@@ -77,9 +77,9 @@ export function CartDrawer({
                 const precoItem = parseFloat(item.precoProduto);
                 const totalItem = precoItem * item.quantidade;
                 const totalFormatado = new Intl.NumberFormat("pt-MZ", {
-                  style: "currency",
-                  currency: "MZN",
-                }).format(totalItem);
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(totalItem) + " MZN";
 
                 return (
                   <div key={`${item.productId}-${item.tamanho}-${item.cor}`} data-testid={`cart-item-${index}`}>

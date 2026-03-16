@@ -10,9 +10,9 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const imagemPrincipal = product.imagens[0] || "";
   const precoFormatado = new Intl.NumberFormat("pt-MZ", {
-    style: "currency",
-    currency: "MZN",
-  }).format(parseFloat(product.preco));
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(parseFloat(product.preco)) + " MZN";
 
   return (
     <Link href={`/produto/${product.slug}`}>

@@ -21,9 +21,9 @@ export default function ReportsPage() {
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat("pt-MZ", {
-            style: "currency",
-            currency: "MZN",
-        }).format(value);
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(value) + " MZN";
     };
 
     // Orders by status

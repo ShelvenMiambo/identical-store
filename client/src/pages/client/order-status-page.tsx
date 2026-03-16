@@ -37,7 +37,7 @@ export default function OrderStatusPage() {
     }
 
     const fmt = (v: string | number) =>
-        parseFloat(String(v)).toLocaleString("pt-MZ", { style: "currency", currency: "MZN" });
+        parseFloat(String(v)).toLocaleString("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " MZN";
 
     const payLabel = (m?: string | null) =>
         ({ mpesa: "M-Pesa", emola: "e-Mola", mbim: "Conta Bancária (Millennium BIM)" }[m ?? ""] ?? m ?? "");

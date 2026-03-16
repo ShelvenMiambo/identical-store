@@ -26,9 +26,9 @@ export default function DashboardPage() {
   };
 
   const revenueFormatted = new Intl.NumberFormat("pt-MZ", {
-    style: "currency",
-    currency: "MZN",
-  }).format(stats.totalRevenue);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(stats.totalRevenue) + " MZN";
 
   return (
     <div>
@@ -181,9 +181,9 @@ export default function DashboardPage() {
             <div className="space-y-4">
               {orders.slice(0, 5).map((order) => {
                 const totalFormatado = new Intl.NumberFormat("pt-MZ", {
-                  style: "currency",
-                  currency: "MZN",
-                }).format(parseFloat(order.total));
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }).format(parseFloat(order.total)) + " MZN";
 
                 return (
                   <div

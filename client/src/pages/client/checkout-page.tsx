@@ -128,7 +128,7 @@ export default function CheckoutPage({ cartItems, onClearCart }: CheckoutPagePro
   );
   const total = subtotal;
   const fmt = (v: number) =>
-    new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(v);
+    new Intl.NumberFormat("pt-MZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v) + " MZN";
 
   /* ── Handle comprovativo file ── */
   const handleComprovanteSelect = (file: File) => {
