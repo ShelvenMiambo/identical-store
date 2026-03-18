@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ShoppingBag, Menu, X, User, Search } from "lucide-react";
+import { ShoppingBag, Menu, X, User, Search, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,25 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
   const [location, setLocation] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    // Inicializar estado do tema baseado na classe existente (colocada pelo script no index.html)
+    const isDark = document.documentElement.classList.contains('dark');
+    setTheme(isDark ? 'dark' : 'light');
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('identical-theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('identical-theme', 'light');
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -85,6 +104,18 @@ export function Header({ cartItemCount = 0, onCartClick, user }: HeaderProps) {
                 </Button>
               </Link>
             )}
+
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="relative"
+              aria-label="Alternar Tema"
+              data-testid="button-theme-toggle"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
 
             {/* Cart Button */}
             <Button
