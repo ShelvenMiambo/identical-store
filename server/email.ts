@@ -181,6 +181,46 @@ export async function enviarEmailNovoAdmin(order: any, items: any[]) {
     }
 }
 
+/**
+ * Enviado ao CLIENTE quando o pagamento é confirmado pelo webhook do PaySuite.
+ * routes.ts ~linha 414 chama esta função — era o bug pré-existente da tarefa E.
+ */
+export async function enviarEmailPagamentoConfirmado(order: any) {
+    if (!process.env.RESEND_API_KEY || !order.emailCliente) return;
+    try {
+        const formatter = new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const { data, error } = await resend.emails.send({
+            from: "ID≠NTICAL Angola <onboarding@resend.dev>",
+            to: [order.emailCliente],
+            subject: `Pagamento Confirmado #${order.id.slice(0, 8).toUpperCase()} - ID≠NTICAL`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                    <div style="background-color: #000; padding: 20px; text-align: center;">
+                        <h1 style="color: #fff; margin: 0; font-size: 24px; letter-spacing: 2px;">ID≠NTICAL</h1>
+                    </div>
+                    <div style="padding: 30px 20px; background-color: #f9f9f9;">
+                        <h2 style="margin-top: 0; color: #16a34a;">✅ Pagamento Confirmado!</h2>
+                        <p>Olá <strong>${order.nomeCliente}</strong>,</p>
+                        <p>O teu pagamento da encomenda <strong>#${order.id.slice(0, 8).toUpperCase()}</strong> foi confirmado com sucesso.</p>
+                        <p><strong>Total pago:</strong> ${formatter.format(order.total)} MZN</p>
+                        <p>A nossa equipa irá preparar o teu pedido e entregar em breve. Agradecemos a confiança!</p>
+                    </div>
+                    <div style="text-align: center; padding: 20px; font-size: 12px; color: #999;">
+                        &copy; ${new Date().getFullYear()} ID≠NTICAL. Todos os direitos reservados.
+                    </div>
+                </div>
+            `,
+        });
+        if (error) {
+            console.error(`[EMAIL] Falha enviarEmailPagamentoConfirmado (${order.emailCliente}):`, error);
+            return;
+        }
+        console.log(`[EMAIL] Confirmação de pagamento enviada para: ${order.emailCliente} | ID: ${data?.id}`);
+    } catch (err) {
+        console.error("Falha ao enviar email de pagamento confirmado:", err);
+    }
+}
+
 export async function enviarEmailComprovanteAdmin(order: any, items: any[], comprovanteUrl: string) {
     if (!process.env.RESEND_API_KEY) return;
     try {

@@ -1,4 +1,4 @@
-import { db } from './db';
+import { db, pool } from './db';
 import {
     users, products, collections, categories,
     orders, orderItems, coupons, siteSettingsTable, orderHistory,
@@ -33,7 +33,7 @@ export class PostgresStorage implements IStorage {
 
     constructor() {
         this.sessionStore = new PgSession({
-            conString: process.env.DATABASE_URL,
+            pool,
             tableName: 'session',
             createTableIfMissing: true,
         });

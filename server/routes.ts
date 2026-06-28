@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertProductSchema, insertCollectionSchema, insertCouponSchema } from "@shared/schema";
 import { insertCategorySchema } from "@shared/schema";
-import { deleteImages, getCloudinaryFolder } from "./media";
+import { deleteImages } from "./media";
+import { ASSETS_DIR, ASSETS_URL_PREFIX } from "./paths";
 import fs from "fs";
 import path from "path";
 
@@ -807,36 +808,14 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Base64 image upload (admin) — Cloudinary quando configurado, local como fallback
-  // Aceita parâmetro opcional `tipo` para organizar pastas: produto | colecao | slideshow | comprovativo
+  // Base64 image upload (admin) — guardado no Volume do Railway (ASSETS_DIR)
   app.post("/api/admin/upload-base64", requireAdmin, async (req, res, next) => {
     try {
-      const { filename, dataUrl, tipo } = req.body || {};
+      const { filename, dataUrl } = req.body || {};
       if (!dataUrl || typeof dataUrl !== "string") {
         return res.status(400).json({ message: "dataUrl obrigatório" });
       }
 
-      // Pasta Cloudinary baseada no tipo de ficheiro
-      const folder = getCloudinaryFolder(tipo ?? "produto");
-
-      // Se Cloudinary está configurado, usar Cloudinary
-      if (process.env.CLOUDINARY_CLOUD_NAME) {
-        const { v2: cloudinary } = await import('cloudinary');
-        cloudinary.config({
-          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-          api_key: process.env.CLOUDINARY_API_KEY,
-          api_secret: process.env.CLOUDINARY_API_SECRET,
-        });
-
-        const result = await cloudinary.uploader.upload(dataUrl, {
-          folder,
-          resource_type: 'auto',
-        });
-
-        return res.status(201).json({ url: result.secure_url });
-      }
-
-      // Fallback: guardar localmente
       const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
       if (!match) {
         return res.status(400).json({ message: "Formato de dataUrl inválido" });
@@ -860,10 +839,9 @@ export function registerRoutes(app: Express): Server {
           : "upload") +
         "_" + Date.now() + ext;
 
-      const assetsDir = path.join(process.cwd(), "attached_assets");
-      if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
-      fs.writeFileSync(path.join(assetsDir, safeName), buffer);
-      return res.status(201).json({ url: "/attached_assets/" + safeName });
+      if (!fs.existsSync(ASSETS_DIR)) fs.mkdirSync(ASSETS_DIR, { recursive: true });
+      fs.writeFileSync(path.join(ASSETS_DIR, safeName), buffer);
+      return res.status(201).json({ url: ASSETS_URL_PREFIX + "/" + safeName });
     } catch (error) {
       next(error);
     }
@@ -882,23 +860,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Apenas imagens ou PDF são aceites" });
       }
 
-      const folder = getCloudinaryFolder("comprovativo");
-
-      if (process.env.CLOUDINARY_CLOUD_NAME) {
-        const { v2: cloudinary } = await import('cloudinary');
-        cloudinary.config({
-          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-          api_key: process.env.CLOUDINARY_API_KEY,
-          api_secret: process.env.CLOUDINARY_API_SECRET,
-        });
-        const result = await cloudinary.uploader.upload(dataUrl, {
-          folder,
-          resource_type: 'auto',
-        });
-        return res.status(201).json({ url: result.secure_url });
-      }
-
-      // Fallback local
       const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
       if (!match) return res.status(400).json({ message: "dataUrl inválido" });
       const mime = match[1];
@@ -906,10 +867,9 @@ export function registerRoutes(app: Express): Server {
       const buffer = Buffer.from(base64, "base64");
       const ext = mime.includes("pdf") ? ".pdf" : ".jpg";
       const safeName = "comprovativo_" + Date.now() + ext;
-      const assetsDir = path.join(process.cwd(), "attached_assets");
-      if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
-      fs.writeFileSync(path.join(assetsDir, safeName), buffer);
-      return res.status(201).json({ url: "/attached_assets/" + safeName });
+      if (!fs.existsSync(ASSETS_DIR)) fs.mkdirSync(ASSETS_DIR, { recursive: true });
+      fs.writeFileSync(path.join(ASSETS_DIR, safeName), buffer);
+      return res.status(201).json({ url: ASSETS_URL_PREFIX + "/" + safeName });
     } catch (error) {
       next(error);
     }

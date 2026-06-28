@@ -3,29 +3,27 @@
  * Executar: npx tsx server/migrate.ts
  */
 import 'dotenv/config';
-import { neon } from '@neondatabase/serverless';
-
-const sql = neon(process.env.DATABASE_URL!);
+import { pool } from './db';
 
 async function migrate() {
     console.log('🔄 A correr migrations...');
 
     try {
         // Adicionar comprovante_url à tabela orders (se não existir)
-        await sql`
+        await pool.query(`
             ALTER TABLE orders ADD COLUMN IF NOT EXISTS comprovante_url TEXT;
-        `;
+        `);
         console.log('✅ comprovante_url adicionado à tabela orders');
 
         // Garantir que metodo_pagamento existe
-        await sql`
+        await pool.query(`
             ALTER TABLE orders ADD COLUMN IF NOT EXISTS metodo_pagamento TEXT;
-        `;
+        `);
         console.log('✅ metodo_pagamento garantido na tabela orders');
 
         // Criar tabela site_settings para persistir configurações do site
         // (substitui o armazenamento em memória RAM que se perdia a cada reinício do servidor)
-        await sql`
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS site_settings (
                 id            INTEGER PRIMARY KEY DEFAULT 1,
                 hero_title    TEXT NOT NULL DEFAULT 'Be Different, Be Classic',
@@ -34,19 +32,19 @@ async function migrate() {
                 highlights    JSONB NOT NULL DEFAULT '[]'::JSONB,
                 updated_at    TIMESTAMP NOT NULL DEFAULT NOW()
             );
-        `;
+        `);
         console.log('✅ Tabela site_settings criada (ou já existia)');
 
         // Inserir linha padrão se não existir (id=1 é o único registo de settings)
-        await sql`
+        await pool.query(`
             INSERT INTO site_settings (id) VALUES (1)
             ON CONFLICT (id) DO NOTHING;
-        `;
+        `);
         console.log('✅ Linha padrão de site_settings garantida');
 
         // Criar tabela order_history para histórico permanente de pedidos
         // Pedidos entregues/cancelados ficam aqui para sempre, mesmo após apagados da tabela orders
-        await sql`
+        await pool.query(`
             CREATE TABLE IF NOT EXISTS order_history (
                 id                VARCHAR PRIMARY KEY DEFAULT gen_random_uuid()::text,
                 order_id          VARCHAR NOT NULL,
@@ -64,26 +62,29 @@ async function migrate() {
                 data_pedido       TIMESTAMP NOT NULL,
                 data_finalizacao  TIMESTAMP NOT NULL DEFAULT NOW()
             );
-        `;
+        `);
         console.log('✅ Tabela order_history criada (ou já existia)');
 
         // Adicionar coluna payment_contacts à tabela site_settings (se não existir)
-        await sql`
+        await pool.query(`
         ALTER TABLE site_settings
         ADD COLUMN IF NOT EXISTS payment_contacts JSONB NOT NULL DEFAULT '{"mpesa":"","emola":"","mbim":""}'::JSONB;
-    `;
+    `);
         console.log('✅ Coluna payment_contacts adicionada à tabela site_settings');
 
         // Adicionar coluna preco_promocional à tabela products (para promoções)
-        await sql`
+        await pool.query(`
             ALTER TABLE products
             ADD COLUMN IF NOT EXISTS preco_promocional DECIMAL(10,2);
-        `;
+        `);
         console.log('✅ Coluna preco_promocional adicionada à tabela products');
 
         console.log('🎉 Migrations concluídas com sucesso!');
+        await pool.end();
+        process.exit(0);
     } catch (err: any) {
         console.error('❌ Erro na migration:', err.message);
+        await pool.end();
         process.exit(1);
     }
 }
