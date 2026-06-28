@@ -11,12 +11,11 @@ import { useState, useEffect } from "react";
 const heroImage2 = "/attached_assets/IMG-20251110-WA0109_1763061428732.jpg";
 
 const HERO_SLIDES = [
-  "/attached_assets/IMG-20251110-WA0115_1763061428731.jpg",
-  "/attached_assets/IMG-20251110-WA0110_1763061428733.jpg",
-  "/attached_assets/IMG-20251110-WA0105_1763061428740.jpg",
-  "/attached_assets/IMG-20251110-WA0111_1763061428734.jpg",
-  "/attached_assets/IMG-20251110-WA0104_1763061428739.jpg",
-  "/attached_assets/IMG-20251110-WA0112_1763061428737.jpg",
+  "/attached_assets/slide_planetas_1.jpg",
+  "/attached_assets/slide_planetas_2.jpg",
+  "/attached_assets/slide_planetas_3.jpg",
+  "/attached_assets/slide_planetas_4.jpg",
+  "/attached_assets/slide_planetas_5.jpg",
 ];
 
 export default function HomePage() {
