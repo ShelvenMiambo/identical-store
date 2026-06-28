@@ -10,12 +10,23 @@ import { useState, useEffect } from "react";
 
 const heroImage2 = "/attached_assets/IMG-20251110-WA0109_1763061428732.jpg";
 
-const HERO_SLIDES = [
-  "/slides/slide_planetas_1.jpg",
-  "/slides/slide_planetas_2.jpg",
-  "/slides/slide_planetas_3.jpg",
-  "/slides/slide_planetas_4.jpg",
-  "/slides/slide_planetas_5.jpg",
+interface HeroSlide {
+  src: string;
+  position: string;
+}
+
+const HERO_SLIDES: HeroSlide[] = [
+  { src: "/slides/slide_planetas_1.jpg", position: "center 30%" },
+  { src: "/slides/slide_old_1.jpg", position: "center center" },
+  { src: "/slides/slide_planetas_2.jpg", position: "center 35%" },
+  { src: "/slides/slide_old_2.jpg", position: "center center" },
+  { src: "/slides/slide_planetas_3.jpg", position: "center 40%" },
+  { src: "/slides/slide_old_3.jpg", position: "center center" },
+  { src: "/slides/slide_planetas_4.jpg", position: "center 35%" },
+  { src: "/slides/slide_old_4.jpg", position: "center center" },
+  { src: "/slides/slide_planetas_5.jpg", position: "center 30%" },
+  { src: "/slides/slide_old_5.jpg", position: "center center" },
+  { src: "/slides/slide_old_6.jpg", position: "center center" },
 ];
 
 export default function HomePage() {
@@ -32,8 +43,10 @@ export default function HomePage() {
   });
 
   // Use admin-configured banners if available, otherwise use default slides
-  const slides: string[] =
-    settings?.banners && settings.banners.length > 0 ? settings.banners : HERO_SLIDES;
+  const slides: HeroSlide[] =
+    settings?.banners && settings.banners.length > 0
+      ? settings.banners.map((src: string) => ({ src, position: "center center" }))
+      : HERO_SLIDES;
 
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -58,15 +71,16 @@ export default function HomePage() {
       <section className="relative h-[65vh] md:h-[80vh] flex items-center justify-center overflow-hidden">
         {/* Background Slideshow */}
         <div className="absolute inset-0 z-0">
-          {slides.map((src, index) => (
+          {slides.map((slide, index) => (
             <img
-              key={src}
-              src={src}
+              key={slide.src}
+              src={slide.src}
               alt={`ID≠NTICAL Slide ${index + 1}`}
               className="absolute inset-0 w-full h-full object-cover"
               style={{
                 opacity: index === currentSlide ? 1 : 0,
                 transition: "opacity 1.2s ease-in-out",
+                objectPosition: slide.position,
               }}
             />
           ))}
