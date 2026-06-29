@@ -18,6 +18,9 @@ if (smtpUser && smtpPass) {
             user: smtpUser,
             pass: smtpPass,
         },
+        connectionTimeout: 5000, // 5 segundos de limite para conectar
+        greetingTimeout: 5000,   // 5 segundos para o greeting SMTP
+        socketTimeout: 5000,     // 5 segundos de inatividade do socket
     });
 }
 
@@ -34,6 +37,8 @@ interface MailOptions {
 }
 
 async function enviarEmail(options: MailOptions) {
+    let smtpError: string | null = null;
+
     // A. Tentar Nodemailer SMTP se estiver configurado
     if (transporter) {
         try {
@@ -48,6 +53,7 @@ async function enviarEmail(options: MailOptions) {
             return { success: true, mocked: false };
         } catch (err: any) {
             console.error(`[EMAIL] Falha ao enviar via SMTP:`, err.message);
+            smtpError = err.message;
             // Se falhar o SMTP, tenta o Resend em baixo se estiver disponível
         }
     }
@@ -82,7 +88,15 @@ async function enviarEmail(options: MailOptions) {
         }
     }
 
-    // C. Fallback para Mock se nada estiver configurado
+    // C. Se tentou SMTP e falhou (e não tem Resend configurado)
+    if (smtpError) {
+        return { 
+            success: false, 
+            error: `Erro no envio via Gmail SMTP: ${smtpError}. Isto costuma dever-se ao bloqueio de portas SMTP na nuvem ou a credenciais incorretas.` 
+        };
+    }
+
+    // D. Fallback para Mock se nada estiver configurado
     console.warn(`[EMAIL MOCK] Sem credenciais configuradas (SMTP ou Resend). Email simulado para ${options.to}`);
     return { success: true, mocked: true };
 }
