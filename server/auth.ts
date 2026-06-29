@@ -1,6 +1,7 @@
 // Based on javascript_auth_all_persistance blueprint
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
@@ -98,6 +99,72 @@ export function setupAuth(app: Express) {
     const user = await storage.getUser(id);
     done(null, user);
   });
+
+  // ── Login com Google (OAuth) ──────────────────────────────────────
+  // Ativado só se GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET existirem.
+  // GOOGLE_CALLBACK_URL deve ser o URL absoluto do callback
+  // (ex.: https://<app>.up.railway.app/api/auth/google/callback).
+  const googleEnabled = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  if (googleEnabled) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env.GOOGLE_CLIENT_ID!,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          callbackURL: process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback",
+        },
+        async (_accessToken, _refreshToken, profile, done) => {
+          try {
+            const email = profile.emails?.[0]?.value?.toLowerCase();
+            if (!email) return done(null, false);
+
+            // Já existe conta com este email? → entra direto.
+            let user = await storage.getUserByEmail(email);
+            if (!user) {
+              // Conta nova a partir do perfil Google. Username único derivado do email;
+              // password aleatória inutilizável (o utilizador entra sempre via Google).
+              const base =
+                (email.split("@")[0] || "user").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 20) || "user";
+              let username = base;
+              let n = 0;
+              while (await storage.getUserByUsername(username)) {
+                n += 1;
+                username = `${base}${n}`;
+              }
+              user = await storage.createUser({
+                username,
+                email,
+                nome: profile.displayName || base,
+                password: await hashPassword(randomBytes(32).toString("hex")),
+              });
+            }
+            return done(null, user);
+          } catch (err) {
+            return done(err as Error);
+          }
+        },
+      ),
+    );
+    console.log("✅ [Auth] Login com Google ativado.");
+  } else {
+    console.log("ℹ️ [Auth] Login com Google desativado (faltam GOOGLE_CLIENT_ID/SECRET).");
+  }
+
+  // Início do fluxo OAuth
+  app.get("/api/auth/google", (req, res, next) => {
+    if (!googleEnabled) return res.redirect("/auth?error=google_indisponivel");
+    passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+  });
+
+  // Callback do Google
+  app.get(
+    "/api/auth/google/callback",
+    (req, res, next) => {
+      if (!googleEnabled) return res.redirect("/auth");
+      passport.authenticate("google", { failureRedirect: "/auth?error=google" })(req, res, next);
+    },
+    (_req, res) => res.redirect("/"),
+  );
 
   app.post("/api/register", async (req, res, next) => {
     try {
@@ -211,7 +278,7 @@ export function setupAuth(app: Express) {
       }
 
       if (emailResult.mocked) {
-          return res.status(500).json({ message: "Erro de Configuração: As variáveis SMTP_USER e SMTP_PASS não estão configuradas no Railway. (O link gerado foi para o Deploy Log)" });
+          return res.status(500).json({ message: "Erro de Configuração: a variável RESEND_API_KEY não está definida no Railway. (O link de recuperação foi registado nos Deploy Logs.)" });
       }
 
       res.json({ message: "O email foi enviado com sucesso! Verifica também o Lixo (Spam)." });
