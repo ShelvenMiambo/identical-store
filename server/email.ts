@@ -5,6 +5,8 @@ import { Resend } from 'resend';
 // que plataformas Cloud como Railway impõem para prevenir SPAM. O Resend funciona via porta HTTPS 443!
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+const FROM_EMAIL = process.env.EMAIL_FROM || "onboarding@resend.dev";
+
 export async function sendPasswordResetEmail(toEmail: string, resetLink: string) {
     if (!process.env.RESEND_API_KEY) {
         console.warn(`[EMAIL MOCK] Faltam credenciais. Email para ${toEmail} com link: ${resetLink}`);
@@ -20,7 +22,7 @@ export async function sendPasswordResetEmail(toEmail: string, resetLink: string)
         const { data, error } = await resend.emails.send({
             // Se tiveres um domínio verificado no Resend, coloca-o aqui (ex: 'suporte@oteudominio.com')
             // Por defeito usaremos a funcionalidade de teste do Resend (onboarding@resend.dev) se necessário
-            from: "ID≠NTICAL Angola <onboarding@resend.dev>",
+            from: `ID≠NTICAL Angola <${FROM_EMAIL}>`,
             to: [toEmail],
             subject: "Recuperação de Password - ID≠NTICAL",
             html: `
@@ -145,7 +147,7 @@ export async function enviarEmailConfirmacaoPedido(order: any, items: any[]) {
     if (!process.env.RESEND_API_KEY || !order.emailCliente) return;
     try {
         const { data, error } = await resend.emails.send({
-            from: "ID≠NTICAL Angola <onboarding@resend.dev>",
+            from: `ID≠NTICAL Angola <${FROM_EMAIL}>`,
             to: [order.emailCliente],
             subject: `Confirmação de Encomenda #${order.id.slice(0,8).toUpperCase()} - ID≠NTICAL`,
             html: getOrderHtml(
@@ -170,7 +172,7 @@ export async function enviarEmailNovoAdmin(order: any, items: any[]) {
     if (!process.env.RESEND_API_KEY) return;
     try {
         const { data, error } = await resend.emails.send({
-            from: "ID≠NTICAL Loja <onboarding@resend.dev>",
+            from: `ID≠NTICAL Loja <${FROM_EMAIL}>`,
             to: [ADMIN_EMAIL],
             subject: `[NOVA ENCOMENDA] #${order.id.slice(0,8).toUpperCase()} - ${order.nomeCliente}`,
             html: getOrderHtml(
@@ -200,7 +202,7 @@ export async function enviarEmailPagamentoConfirmado(order: any) {
     try {
         const formatter = new Intl.NumberFormat('pt-MZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const { data, error } = await resend.emails.send({
-            from: "ID≠NTICAL Angola <onboarding@resend.dev>",
+            from: `ID≠NTICAL Angola <${FROM_EMAIL}>`,
             to: [order.emailCliente],
             subject: `Pagamento Confirmado #${order.id.slice(0, 8).toUpperCase()} - ID≠NTICAL`,
             html: `
@@ -240,7 +242,7 @@ export async function enviarEmailComprovanteAdmin(order: any, items: any[], comp
         </div>`;
 
         const { data, error } = await resend.emails.send({
-            from: "ID≠NTICAL Loja <onboarding@resend.dev>",
+            from: `ID≠NTICAL Loja <${FROM_EMAIL}>`,
             to: [ADMIN_EMAIL],
             subject: `[COMPROVATIVO RECEBIDO] Encomenda #${order.id.slice(0,8).toUpperCase()}`,
             html: getOrderHtml(
