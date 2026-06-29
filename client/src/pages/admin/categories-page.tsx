@@ -137,7 +137,29 @@ export default function CategoriesPage() {
           {categories.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Nenhuma categoria encontrada. Adicione a primeira categoria!</p>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* MOBILE: cards */}
+            <div className="sm:hidden space-y-3">
+              {categories.map((cat) => (
+                <div key={cat.id} className="rounded-lg border p-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold truncate">{cat.nome}</p>
+                    <Badge variant={cat.ativo ? "default" : "secondary"} className="text-xs mt-1">{cat.ativo ? "Ativo" : "Inativo"}</Badge>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleEdit(cat)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="destructive" size="icon" className="h-9 w-9" onClick={() => { if (confirm("Eliminar esta categoria?")) deleteMutation.mutate(cat.id); }}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* DESKTOP: table */}
+            <div className="hidden sm:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -170,6 +192,7 @@ export default function CategoriesPage() {
                 </TableBody>
               </Table>
             </div>
+            </>
           )}
         </CardContent>
       </Card>

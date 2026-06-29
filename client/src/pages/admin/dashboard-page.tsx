@@ -42,7 +42,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-blue-100">
@@ -83,7 +83,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{revenueFormatted}</div>
+            <div className="text-lg sm:text-2xl font-bold break-words">{revenueFormatted}</div>
           </CardContent>
         </Card>
       </div>

@@ -295,7 +295,39 @@ export default function UsersPage() {
                             <p>Nenhum utilizador registado ainda.</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-lg border">
+                        <>
+                        {/* MOBILE: cards */}
+                        <div className="sm:hidden space-y-3">
+                            {users.map((u) => (
+                                <div key={u.id} className="rounded-lg border p-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-sm uppercase shrink-0">
+                                            {(u.nome || u.username || "?")[0]}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-medium truncate">{u.nome || "—"}</p>
+                                            <p className="text-xs text-muted-foreground truncate">@{u.username} · {u.email}</p>
+                                        </div>
+                                        {u.isAdmin ? (
+                                            <Badge className="gap-1 bg-slate-900 text-white shrink-0"><Shield className="h-3 w-3" /> Admin</Badge>
+                                        ) : (
+                                            <Badge variant="secondary" className="gap-1 shrink-0"><User className="h-3 w-3" /> Cliente</Badge>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2 mt-3">
+                                        <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={() => openEdit(u)}>
+                                            <Pencil className="h-3.5 w-3.5" /> Editar
+                                        </Button>
+                                        <Button size="sm" variant="destructive" className="flex-1 gap-1.5" onClick={() => setDeleteUserId(u.id)}>
+                                            <Trash2 className="h-3.5 w-3.5" /> Apagar
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* DESKTOP: table */}
+                        <div className="hidden sm:block overflow-x-auto rounded-lg border">
                             <table className="w-full text-sm">
                                 <thead className="bg-slate-50 dark:bg-slate-800 border-b">
                                     <tr>
@@ -362,6 +394,7 @@ export default function UsersPage() {
                                 </tbody>
                             </table>
                         </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

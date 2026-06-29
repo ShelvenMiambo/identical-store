@@ -288,7 +288,29 @@ export default function CollectionsPage() {
                             Nenhuma coleção encontrada. Adicione a primeira coleção!
                         </p>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <>
+                        {/* MOBILE: cards */}
+                        <div className="sm:hidden space-y-3">
+                            {collections.map((collection) => (
+                                <div key={collection.id} className="rounded-lg border p-3 flex items-center justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-semibold truncate">{collection.nome}</p>
+                                        <Badge variant={collection.ativo ? "default" : "secondary"} className="text-xs mt-1">{collection.ativo ? "Ativo" : "Inativo"}</Badge>
+                                    </div>
+                                    <div className="flex gap-2 shrink-0">
+                                        <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleEditCollection(collection)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="destructive" size="icon" className="h-9 w-9" onClick={() => { if (confirm("Tem certeza que deseja eliminar esta coleção?")) deleteCollectionMutation.mutate(collection.id); }}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* DESKTOP: table */}
+                        <div className="hidden sm:block overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -339,6 +361,7 @@ export default function CollectionsPage() {
                                 </TableBody>
                             </Table>
                         </div>
+                        </>
                     )}
                 </CardContent>
             </Card>

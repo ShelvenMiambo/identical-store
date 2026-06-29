@@ -203,7 +203,41 @@ export default function ProductsPage() {
                             Nenhum produto encontrado. Adicione o primeiro produto!
                         </p>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <>
+                        {/* MOBILE: cards */}
+                        <div className="sm:hidden space-y-3">
+                            {products.map((product) => (
+                                <div key={product.id} className="rounded-lg border p-3 flex items-center gap-3">
+                                    <img src={product.imagens[0] || ""} alt={product.nome} className="w-14 h-14 rounded object-cover bg-muted shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="font-semibold truncate">{product.nome}</p>
+                                        <p className="text-sm">
+                                            {(product as any).precoPromocional ? (
+                                                <>
+                                                    <span className="line-through text-muted-foreground text-xs mr-1">{fmt(product.preco)}</span>
+                                                    <span className="font-bold text-orange-600">{fmt((product as any).precoPromocional)}</span>
+                                                </>
+                                            ) : fmt(product.preco)}
+                                        </p>
+                                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                                            <Badge variant={product.ativo ? "default" : "secondary"} className="text-xs">{product.ativo ? "Ativo" : "Inativo"}</Badge>
+                                            <span className="text-xs text-muted-foreground">Stock: {product.estoque || 0}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-2 shrink-0">
+                                        <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => openEdit(product)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="destructive" size="icon" className="h-9 w-9" onClick={() => { if (confirm("Tem certeza que deseja eliminar este produto?")) deleteProductMutation.mutate(product.id); }}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* DESKTOP: table */}
+                        <div className="hidden sm:block overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -279,6 +313,7 @@ export default function ProductsPage() {
                                 </TableBody>
                             </Table>
                         </div>
+                        </>
                     )}
                 </CardContent>
             </Card>
