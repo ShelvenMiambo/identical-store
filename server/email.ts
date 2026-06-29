@@ -11,6 +11,9 @@ export async function sendPasswordResetEmail(toEmail: string, resetLink: string)
         return { success: true, mocked: true };
     }
 
+    // Sempre logar o link no console do servidor para fins de depuração/testes fáceis no Railway
+    console.log(`🔑 [PASSWORD RESET] Link de recuperação gerado para ${toEmail}: ${resetLink}`);
+
     try {
         console.log(`[EMAIL] A usar Resend API (HTTP 443) para contornar firewall SMTP. Destinatário: ${toEmail}`);
 
@@ -21,7 +24,7 @@ export async function sendPasswordResetEmail(toEmail: string, resetLink: string)
             to: [toEmail],
             subject: "Recuperação de Password - ID≠NTICAL",
             html: `
-                <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; color: #333;">
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
                     <div style="background-color: #000; padding: 20px; text-align: center;">
                         <h1 style="color: #fff; margin: 0; font-size: 24px; letter-spacing: 2px;">ID≠NTICAL</h1>
                     </div>
@@ -52,6 +55,13 @@ export async function sendPasswordResetEmail(toEmail: string, resetLink: string)
 
         if (error) {
             console.error("Erro interno do Resend:", error);
+            // Mensagem amigável caso seja restrição de Sandbox
+            if (error.message && error.message.includes("testing emails")) {
+                return { 
+                    success: false, 
+                    error: "O teu plano Resend está em modo Sandbox de testes. Só podes enviar e-mails de teste para o e-mail do proprietário da conta (identicaloficialmz@gmail.com). O link foi gerado e registado com sucesso nos logs do painel do Railway." 
+                };
+            }
             return { success: false, error: error.message };
         }
 
